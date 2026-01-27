@@ -1,0 +1,37 @@
+.file-upload {
+  width: 100%;
+}
+
+.dropzone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+}
+
+.dropzone:hover {
+  border-color: #007bff;
+  background-color: #f0f8ff;
+}
+
+.dropzone.active {
+  border-color: #007bff;
+  background-color: #e6f3ff;
+}
+
+.dropzone-content p {
+  margin: 0.5rem 0;
+}
+
+.file-types {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.file-size {
+  font-size: 0.85rem;
+  color: #999;
+}

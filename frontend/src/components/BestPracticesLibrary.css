@@ -1,0 +1,119 @@
+.best-practices-library {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.best-practices-library h2 {
+  margin-bottom: 2rem;
+}
+
+.library-content {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+}
+
+.practices-sidebar {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 1rem;
+  background-color: #f8f9fa;
+}
+
+.category-filter {
+  margin-bottom: 1rem;
+}
+
+.category-filter label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.category-filter select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.practices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.practice-item {
+  padding: 1rem;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.practice-item:hover {
+  border-color: #007bff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.practice-item.selected {
+  border-color: #007bff;
+  background-color: #e6f3ff;
+}
+
+.practice-item h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+}
+
+.practice-category {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.practice-detail {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2rem;
+  background-color: white;
+}
+
+.practice-detail h3 {
+  margin: 0 0 1rem 0;
+}
+
+.practice-description {
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.practice-example,
+.practice-template {
+  margin-bottom: 1.5rem;
+}
+
+.practice-example pre,
+.practice-template pre {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin-top: 0.5rem;
+}
+
+.btn-copy-template {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-copy-template:hover {
+  background-color: #0056b3;
+}

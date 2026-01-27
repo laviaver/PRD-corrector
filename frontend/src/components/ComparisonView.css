@@ -1,0 +1,88 @@
+.comparison-view {
+  width: 100%;
+}
+
+.comparison-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.view-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.view-mode-toggle button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  background-color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.view-mode-toggle button.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.side-by-side-view {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.comparison-panel {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+.comparison-panel h3 {
+  margin: 0;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #ddd;
+}
+
+.prd-content {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 600px;
+  padding: 1rem;
+}
+
+.prd-content pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.diff-view {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2rem;
+  background-color: white;
+}
+
+.missing-sections h3 {
+  margin: 0 0 1rem 0;
+}
+
+.missing-sections ul {
+  list-style: none;
+  padding: 0;
+}
+
+.missing-sections li {
+  padding: 0.5rem;
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  margin-bottom: 0.5rem;
+}

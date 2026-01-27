@@ -1,0 +1,191 @@
+# SDD Checklist
+
+**Purpose**: Detailed guidance for SDD task completion workflow.
+
+**ENFORCEMENT**: See `.cursor/rules/04-sdd-process.mdc` for MUST/NEVER requirements.
+
+## After Every Task Completion: 7-Step Workflow
+
+Follow these steps after completing a task and verifying tests pass:
+
+### 1. Verify Tests Pass
+
+```bash
+# Backend
+cd backend && pytest
+
+# Frontend  
+cd frontend && npm test
+```
+
+**Status**: All packages ok, no failures
+
+### 2. Check Dependency Reflections (REFLECT)
+
+Run the **dependency-reflection** check:
+
+**Ask yourself:**
+- Did I modify models? → Check services, API handlers, data-model.md, tests
+- Did I add/modify endpoints? → Check contracts/api.yaml, E2E tests
+- Did I change storage interface? → Check all services using storage
+- Did I complete a phase step? → Check plan.md status, task.md, DEVELOPMENT.md
+- Did I refactor code? → Check all tests still pass, docs still accurate
+
+**Reflection Checklist:**
+- [ ] Documentation sync verified (spec.md, plan.md, data-model.md, task.md, DEVELOPMENT.md)
+- [ ] Code sync verified (models, services, API handlers match)
+- [ ] Test sync verified (tests cover new/modified behavior)
+
+**Run regression tests** if any medium/high-priority reflections detected.
+
+### 3. Update spec.md/plan.md if Needed (SYNC)
+
+Run the **spec-sync-check**:
+
+**High-Priority Triggers** (MUST update spec.md/plan.md):
+- [ ] Completed a phase step (update plan.md Implementation Status)
+- [ ] Added new endpoint (update contracts/api.yaml)
+- [ ] Added new service/package (update plan.md Project Structure)
+- [ ] Modified API response format (update data-model.md)
+- [ ] Changed configuration (update plan.md Technical Context)
+
+**If triggered:**
+1. Open `specs/002-prd-reviewer/spec.md` or `plan.md`
+2. Update relevant sections (see spec-sync-check.mdc for details)
+3. Update "Last Updated" date
+4. Verify accuracy of changes
+
+**Include spec.md/plan.md in commit** if updated.
+
+### 4. Stage Changes
+
+```bash
+git add <files-related-to-task>
+# If spec.md/plan.md was updated:
+git add specs/002-prd-reviewer/spec.md
+git add specs/002-prd-reviewer/plan.md
+```
+
+**Stage files for THIS task** including:
+- Code changes
+- Test changes
+- spec.md/plan.md (if updated during SYNC step)
+- Do NOT include unrelated changes
+
+### 5. Commit with Descriptive Message
+
+```bash
+git commit -m "$(cat <<'EOF'
+feat(backend|frontend): complete TASK## - Task Name
+
+Brief description of what was accomplished.
+
+## Changes
+- List key changes
+- With bullet points
+
+Files changed: N files
+Test status: All passing
+Time: Xh actual / Yh estimated
+
+🤖 Generated with Cursor
+EOF
+)"
+```
+
+**Commit message format**:
+- Prefix: `feat`, `fix`, `docs`, `test`, `refactor`
+- Component: `backend` or `frontend`
+- Description: What was accomplished
+- Changes: Bullet list of key changes
+- Metadata: Files changed, test status, time tracking
+
+### 6. Update Progress Tracking
+
+**a) Mark task as complete in specs/002-prd-reviewer/tasks.md:**
+
+```markdown
+- [x] TASK## Task description
+```
+
+**Update the checkbox** from `[ ]` to `[x]` for the completed task in the appropriate phase section.
+
+**b) Update .work-items/002-prd-reviewer/task.md progress tracker:**
+
+```markdown
+### TASK##: Task Name (Date)
+
+**Status**: COMPLETE
+**Time**: Xh actual / Yh estimated
+
+**Completed**:
+- Deliverable 1
+- Deliverable 2
+
+**Changes**:
+- Modified: backend/src/models/prd.py
+- Added: backend/tests/unit/test_prd.py
+
+**Commit**: {hash}
+```
+
+**c) Update .cursor/DEVELOPMENT.md:**
+- Current status section
+- Recently completed work (last 1-2 items)
+- Next steps
+
+### 7. Only Then Proceed to Next Task
+
+Verify all steps complete before moving forward.
+
+**See `.cursor/rules/04-sdd-process.mdc` for enforcement requirements.**
+
+## Workflow Context
+
+The SDD workflow ties together:
+- **SPEC**: What needs to be done (spec.md, plan.md)
+- **TEST**: Verify expectations (TDD: RED → GREEN → REFACTOR)
+- **CODE**: Minimal implementation
+- **REFLECT**: Check dependencies (dependency-reflection.mdc)
+- **SYNC**: Update spec.md/plan.md (spec-sync-check.mdc)
+- **COMMIT**: Record progress
+- **NEXT**: Move forward confidently
+
+Each step builds on the previous, ensuring quality and clarity.
+
+## Integration with TodoWrite
+
+Use TodoWrite to track:
+```javascript
+[
+  {"content": "Complete TASK##", "status": "completed"},
+  {"content": "Commit TASK## changes", "status": "completed"},
+  {"content": "Update progress docs", "status": "completed"},
+  {"content": "Start next task", "status": "in_progress"}
+]
+```
+
+## Summary
+
+**Every completed task = 7 steps:**
+1. Tests pass
+2. **Check reflections (REFLECT)**
+3. **Update spec.md/plan.md if triggered (SYNC)**
+4. Stage changes (code + spec.md/plan.md if updated)
+5. Git commit
+6. Update tasks.md (mark checkbox), task.md, and DEVELOPMENT.md
+7. Proceed to next
+
+**No exceptions.** This is the enhanced SDD way.
+
+## Quick Reference
+
+Before committing, verify:
+- ✅ Tests pass
+- ✅ Reflections checked (use dependency-reflection.mdc)
+- ✅ spec.md/plan.md updated if needed (use spec-sync-check.mdc)
+- ✅ All related files staged (code + docs)
+- ✅ Commit message descriptive
+- ✅ tasks.md checkbox marked [x]
+- ✅ Progress documented (task.md, DEVELOPMENT.md)
+- ✅ Ready for next task
