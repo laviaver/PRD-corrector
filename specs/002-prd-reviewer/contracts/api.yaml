@@ -1,0 +1,317 @@
+openapi: 3.0.3
+info:
+  title: PRD Reviewer API
+  description: API for analyzing Product Requirements Documents and generating improvement suggestions
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api
+    description: Local development server
+  - url: https://api.prdreviewer.example.com/api
+    description: Production server
+
+paths:
+  /analyze:
+    post:
+      summary: Upload and analyze a PRD
+      description: Accepts a PRD file or text content and initiates analysis
+      operationId: analyzePRD
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: PRD file (.txt, .md, or .docx)
+                content:
+                  type: string
+                  description: PRD text content (alternative to file upload)
+              oneOf:
+                - required: [file]
+                - required: [content]
+      responses:
+        '200':
+          description: Analysis initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+        '400':
+          description: Invalid request (missing file/content, invalid format, file too large)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: File too large (exceeds 10MB)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /analysis/{analysis_id}:
+    get:
+      summary: Get analysis results
+      description: Retrieve the results of a PRD analysis
+      operationId: getAnalysis
+      parameters:
+        - name: analysis_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier for the analysis
+      responses:
+        '200':
+          description: Analysis results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+        '404':
+          description: Analysis not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /analysis/{analysis_id}/status:
+    get:
+      summary: Get analysis status
+      description: Check the current status of an analysis (for polling)
+      operationId: getAnalysisStatus
+      parameters:
+        - name: analysis_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Analysis status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [pending, processing, completed, failed]
+                  progress:
+                    type: integer
+                    minimum: 0
+                    maximum: 100
+                    description: Progress percentage (0-100)
+                  error_message:
+                    type: string
+                    nullable: true
+        '404':
+          description: Analysis not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /export:
+    post:
+      summary: Export analysis results
+      description: Export analysis results in specified format (PDF, Markdown, or JSON)
+      operationId: exportAnalysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - analysis_id
+                - format
+              properties:
+                analysis_id:
+                  type: string
+                  format: uuid
+                format:
+                  type: string
+                  enum: [pdf, markdown, json]
+      responses:
+        '200':
+          description: Export file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            text/markdown:
+              schema:
+                type: string
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalysisResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Analysis not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    AnalysisResponse:
+      type: object
+      required:
+        - id
+        - status
+        - prd
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+        prd:
+          $ref: '#/components/schemas/PRDInfo'
+        summary:
+          $ref: '#/components/schemas/AnalysisSummary'
+        suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Suggestion'
+        error_message:
+          type: string
+          nullable: true
+
+    PRDInfo:
+      type: object
+      required:
+        - id
+        - file_type
+      properties:
+        id:
+          type: string
+          format: uuid
+        filename:
+          type: string
+          nullable: true
+        file_type:
+          type: string
+          enum: [txt, md, docx]
+        content_preview:
+          type: string
+          description: First 500 characters of content
+        size:
+          type: integer
+          description: Size in bytes
+
+    AnalysisSummary:
+      type: object
+      properties:
+        total_suggestions:
+          type: integer
+          minimum: 0
+        suggestions_by_category:
+          type: object
+          additionalProperties:
+            type: integer
+        suggestions_by_priority:
+          type: object
+          additionalProperties:
+            type: integer
+
+    Suggestion:
+      type: object
+      required:
+        - id
+        - category
+        - priority
+        - title
+        - explanation
+      properties:
+        id:
+          type: string
+          format: uuid
+        category:
+          type: string
+          enum: [structure, clarity, completeness, best_practices, technical_quality]
+        priority:
+          type: string
+          enum: [high, medium, low]
+        title:
+          type: string
+          minLength: 5
+          maxLength: 200
+        explanation:
+          type: string
+          minLength: 20
+          maxLength: 5000
+        location:
+          $ref: '#/components/schemas/Location'
+        example:
+          type: string
+          nullable: true
+        template:
+          type: string
+          nullable: true
+
+    Location:
+      type: object
+      properties:
+        section:
+          type: string
+          nullable: true
+        paragraph_index:
+          type: integer
+          nullable: true
+          minimum: 0
+        line_range:
+          type: object
+          properties:
+            start:
+              type: integer
+              minimum: 0
+            end:
+              type: integer
+              minimum: 0
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+          additionalProperties: true
