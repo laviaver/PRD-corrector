@@ -20,11 +20,8 @@ export async function uploadPRDFile(file: File): Promise<AnalyzeResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
-  return post<AnalyzeResponse>(API_ENDPOINTS.ANALYZE, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  // Don't set Content-Type header - let browser set it with boundary
+  return post<AnalyzeResponse>(API_ENDPOINTS.ANALYZE, formData);
 }
 
 /**
@@ -34,9 +31,6 @@ export async function pastePRDText(text: string): Promise<AnalyzeResponse> {
   const formData = new FormData();
   formData.append('text', text);
 
-  return post<AnalyzeResponse>(API_ENDPOINTS.ANALYZE, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  // Don't set Content-Type header - let browser set it with boundary
+  return post<AnalyzeResponse>(API_ENDPOINTS.ANALYZE, formData);
 }
