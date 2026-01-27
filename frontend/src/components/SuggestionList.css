@@ -1,0 +1,29 @@
+.suggestion-list {
+  margin: 1rem 0;
+}
+
+.suggestion-list.empty {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.suggestion-list.grouped {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.suggestion-group {
+  margin-bottom: 2rem;
+}
+
+.group-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  color: #333;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #ddd;
+}

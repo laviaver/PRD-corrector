@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import UploadPage from './pages/UploadPage';
+import ResultsPage from './pages/ResultsPage';
 import './App.css';
 
 function App() {
@@ -9,7 +10,7 @@ function App() {
         <Routes>
           <Route path="/" element={<UploadPage />} />
           <Route path="/upload" element={<UploadPage />} />
-          {/* Analysis and results routes will be added in Phase 4-5 */}
+          <Route path="/analysis/:prdId" element={<ResultsPage />} />
         </Routes>
       </div>
     </BrowserRouter>

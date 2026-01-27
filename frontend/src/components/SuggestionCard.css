@@ -1,0 +1,103 @@
+.suggestion-card {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  background-color: white;
+  transition: box-shadow 0.2s;
+}
+
+.suggestion-card:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.suggestion-card.priority-high {
+  border-left: 4px solid #dc3545;
+}
+
+.suggestion-card.priority-medium {
+  border-left: 4px solid #ffc107;
+}
+
+.suggestion-card.priority-low {
+  border-left: 4px solid #28a745;
+}
+
+.suggestion-header {
+  padding: 1rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.suggestion-title-row {
+  flex: 1;
+}
+
+.suggestion-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.suggestion-badges {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.priority-badge,
+.category-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+}
+
+.category-badge {
+  background-color: #6c757d;
+}
+
+.expand-button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  margin-left: 1rem;
+}
+
+.suggestion-details {
+  padding: 0 1rem 1rem 1rem;
+  border-top: 1px solid #eee;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+}
+
+.suggestion-details > div {
+  margin-bottom: 1rem;
+}
+
+.suggestion-details > div:last-child {
+  margin-bottom: 0;
+}
+
+.explanation p,
+.location p {
+  margin: 0.5rem 0 0 0;
+  color: #666;
+  line-height: 1.6;
+}
+
+.example pre,
+.template pre {
+  background-color: #f8f9fa;
+  padding: 0.75rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  margin: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
