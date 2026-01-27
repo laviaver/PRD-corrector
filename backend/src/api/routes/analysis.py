@@ -4,8 +4,9 @@ Analysis endpoints for retrieving analysis results and status.
 This module provides endpoints for getting analysis results and polling status.
 """
 
-from fastapi import APIRouter, HTTPException, status
 from uuid import UUID
+
+from fastapi import APIRouter, HTTPException, status
 
 from src.services.analysis_service import analysis_service
 from src.services.storage import storage
@@ -45,9 +46,10 @@ async def get_analysis(analysis_id: str):
     # Get suggestions
     suggestions = analysis_service.get_suggestions(analysis_uuid)
 
+    # Use mode='json' so datetime, UUID etc. are JSON-serializable
     return {
-        "analysis": analysis.model_dump(),
-        "suggestions": [s.model_dump() for s in suggestions],
+        "analysis": analysis.model_dump(mode="json"),
+        "suggestions": [s.model_dump(mode="json") for s in suggestions],
     }
 
 
@@ -81,9 +83,10 @@ async def get_analysis_by_prd(prd_id: str):
     # Get suggestions
     suggestions = analysis_service.get_suggestions(analysis.id)
 
+    # Use mode='json' so datetime, UUID etc. are JSON-serializable
     return {
-        "analysis": analysis.model_dump(),
-        "suggestions": [s.model_dump() for s in suggestions],
+        "analysis": analysis.model_dump(mode="json"),
+        "suggestions": [s.model_dump(mode="json") for s in suggestions],
     }
 
 

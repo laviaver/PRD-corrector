@@ -1,23 +1,41 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getAnalysisStatus, AnalysisStatus as AnalysisStatusType } from '../services/analysisService';
 import './AnalysisStatus.css';
+
+const POLL_INTERVAL_MS = 1500;
+const STUCK_TIMEOUT_MS = 60000; // Show "taking longer" after 60s
 
 interface AnalysisStatusProps {
   analysisId: string;
   onComplete?: () => void;
+  onBack?: () => void;
   pollInterval?: number;
 }
 
 export default function AnalysisStatus({
   analysisId,
   onComplete,
-  pollInterval = 2000,
+  onBack,
+  pollInterval = POLL_INTERVAL_MS,
 }: AnalysisStatusProps) {
   const [status, setStatus] = useState<AnalysisStatusType | null>(null);
   const [error, setError] = useState<string>('');
+  const [stuck, setStuck] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const startTimeRef = useRef<number>(Date.now());
+  const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
+
+  const stopPolling = useCallback(() => {
+    if (intervalIdRef.current) {
+      clearInterval(intervalIdRef.current);
+      intervalIdRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    startTimeRef.current = Date.now();
+    setStuck(false);
+    setElapsed(0);
 
     const pollStatus = async () => {
       try {
@@ -25,33 +43,57 @@ export default function AnalysisStatus({
         setStatus(currentStatus);
 
         if (currentStatus.status === 'completed') {
+          stopPolling();
           onComplete?.();
-          if (intervalId) clearInterval(intervalId);
         } else if (currentStatus.status === 'failed') {
+          stopPolling();
           setError(currentStatus.error_message || 'Analysis failed');
-          if (intervalId) clearInterval(intervalId);
+        } else if (Date.now() - startTimeRef.current >= STUCK_TIMEOUT_MS) {
+          setStuck(true);
         }
       } catch (err) {
+        stopPolling();
         setError(err instanceof Error ? err.message : 'Failed to get analysis status');
-        if (intervalId) clearInterval(intervalId);
       }
     };
 
-    // Poll immediately
     pollStatus();
+    intervalIdRef.current = setInterval(pollStatus, pollInterval);
 
-    // Then poll at interval
-    intervalId = setInterval(pollStatus, pollInterval);
+    return () => stopPolling();
+  }, [analysisId, onComplete, pollInterval, stopPolling]);
 
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [analysisId, onComplete, pollInterval]);
+  useEffect(() => {
+    if (status?.status !== 'processing' && status?.status !== 'pending') return;
+    const t = setInterval(() => {
+      setElapsed(Math.round((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [status?.status]);
 
   if (error) {
     return (
       <div className="analysis-status error">
         <strong>Error:</strong> {error}
+        {onBack && (
+          <button type="button" className="btn-back-inline" onClick={onBack}>
+            Back to Upload
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  if (stuck && status && (status.status === 'processing' || status.status === 'pending')) {
+    return (
+      <div className="analysis-status stuck">
+        <strong>Taking longer than expected</strong>
+        <p>The analysis may have failed or the server is slow. You can try again or go back.</p>
+        {onBack && (
+          <button type="button" className="btn-back-inline" onClick={onBack}>
+            Back to Upload
+          </button>
+        )}
       </div>
     );
   }
@@ -60,7 +102,7 @@ export default function AnalysisStatus({
     return <div className="analysis-status">Loading status...</div>;
   }
 
-  const statusMessages = {
+  const statusMessages: Record<string, string> = {
     pending: 'Analysis queued...',
     processing: 'Analyzing PRD...',
     completed: 'Analysis completed!',
@@ -71,11 +113,11 @@ export default function AnalysisStatus({
     <div className={`analysis-status ${status.status}`}>
       <div className="status-indicator">
         {status.status === 'processing' && <span className="spinner" />}
-        <span className="status-text">{statusMessages[status.status]}</span>
+        <span className="status-text">{statusMessages[status.status] ?? status.status}</span>
       </div>
-      {status.status === 'processing' && (
+      {(status.status === 'processing' || status.status === 'pending') && (
         <div className="status-details">
-          <p>This may take up to 30 seconds...</p>
+          <p>This usually takes 10–30 seconds.{elapsed > 0 && ` Elapsed: ${elapsed}s`}</p>
         </div>
       )}
     </div>

@@ -55,14 +55,33 @@ def parse_file(file_content: BinaryIO, filename: str, file_type: PRDFileType) ->
 
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.docx') as tmp_file:
                     tmp_file.write(file_content.read())
+                    tmp_file.flush()
                     tmp_path = tmp_file.name
+                # Ensure file is closed before python-docx opens it (helps on Windows/macOS)
 
                 try:
                     doc = Document(tmp_path)
-                    # Extract text from all paragraphs
-                    paragraphs = [para.text for para in doc.paragraphs]
-                    content = '\n'.join(paragraphs)
-                    return content.strip()
+                    # Extract text from paragraphs first
+                    parts = [para.text.strip() for para in doc.paragraphs if para.text.strip()]
+                    content = '\n'.join(parts)
+                    # If little or no text in paragraphs, try tables (many PRDs use tables)
+                    if len(content) < 100 and hasattr(doc, 'tables') and doc.tables:
+                        table_texts = []
+                        for table in doc.tables:
+                            for row in table.rows:
+                                for cell in row.cells:
+                                    if cell.text.strip():
+                                        table_texts.append(cell.text.strip())
+                        if table_texts:
+                            content = '\n'.join(parts + [''] + table_texts) if parts else '\n'.join(table_texts)
+                    content = content.strip()
+                    if not content:
+                        raise FileParseError(
+                            "Document has no extractable text. The file may be empty, "
+                            "or text may be in images/headers/footers.",
+                            file_type.value,
+                        )
+                    return content
                 finally:
                     # Clean up temporary file
                     if os.path.exists(tmp_path):
@@ -70,6 +89,8 @@ def parse_file(file_content: BinaryIO, filename: str, file_type: PRDFileType) ->
 
             except PackageNotFoundError:
                 raise FileParseError(f"Invalid .docx file: {filename}", file_type.value)
+            except FileParseError:
+                raise  # keep our "no extractable text" (or other) message
             except Exception as e:
                 logger.error(f"Error parsing .docx file {filename}: {e}")
                 raise FileParseError(f"Failed to parse .docx file: {str(e)}", file_type.value)
@@ -77,6 +98,8 @@ def parse_file(file_content: BinaryIO, filename: str, file_type: PRDFileType) ->
         else:
             raise FileParseError(f"Unsupported file type: {file_type}", file_type.value)
 
+    except FileParseError:
+        raise  # already a clear message (e.g. empty docx)
     except UnicodeDecodeError as e:
         logger.error(f"Encoding error parsing file {filename}: {e}")
         raise FileParseError(f"Failed to decode file content: {str(e)}", file_type.value)

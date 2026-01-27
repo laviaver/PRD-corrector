@@ -103,6 +103,7 @@ export default function ResultsPage() {
           <AnalysisStatus
             analysisId={analysisData.id}
             onComplete={handleAnalysisComplete}
+            onBack={() => navigate('/')}
           />
         </div>
       ) : (

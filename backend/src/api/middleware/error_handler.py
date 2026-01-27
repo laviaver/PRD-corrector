@@ -80,10 +80,13 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
     Returns:
         JSONResponse with error details
     """
+    # Support both "error" and "detail" for client compatibility
+    detail = exc.detail if isinstance(exc.detail, (str, type(None))) else str(exc.detail)
     return JSONResponse(
         status_code=exc.status_code,
         content={
-            "error": exc.detail,
+            "error": detail,
+            "detail": detail,
             "status_code": exc.status_code,
         },
     )

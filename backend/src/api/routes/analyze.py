@@ -6,8 +6,9 @@ This endpoint handles file uploads and text paste, creates PRD, and initiates an
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError as PydanticValidationError
 
+from src.config import settings
 from src.services.prd_service import prd_service
 from src.services.analysis_service import analysis_service
 from src.services.validation import ValidationError
@@ -104,9 +105,26 @@ async def analyze_prd(
             detail=str(e),
         )
 
+    except PydanticValidationError as e:
+        # PRD/Analysis model validation (e.g. content empty, size invalid)
+        errs = e.errors()
+        msg = errs[0].get("msg", str(e)) if errs else str(e)
+        if errs and "loc" in errs[0]:
+            loc = errs[0]["loc"]
+            if loc and loc[-1] == "content":
+                msg = "Content must not be empty. The file may have no extractable text."
+        logger.error(f"Validation error in analyze: {msg}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=msg,
+        ) from e
+
     except Exception as e:
         logger.error(f"Unexpected error in analyze endpoint: {e}", exc_info=True)
+        detail = "An unexpected error occurred"
+        if getattr(settings, "DEBUG", False):
+            detail = f"{detail}: {type(e).__name__}: {e}"
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred",
+            detail=detail,
         )

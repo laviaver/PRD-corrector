@@ -1,9 +1,14 @@
 #!/bin/bash
 
 # PRD Reviewer - Start Script
-# This script starts both backend and frontend servers
+# This script starts both backend and frontend servers.
+# Run from any directory, e.g.: /path/to/PRD-corrector/start.sh
 
 set -e
+
+# Step 1: Change to the project directory (where this script lives)
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$PROJECT_DIR"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -11,10 +16,6 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
-
-# Get the directory where the script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR"
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}  PRD Reviewer - Starting Services${NC}"

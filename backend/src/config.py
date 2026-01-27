@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # LLM Provider Configuration
-    LLM_PROVIDER: str = "ollama"  # Options: "ollama", "groq", "openai", "huggingface"
+    LLM_PROVIDER: str = "groq"  # Options: "groq", "ollama", "openai", "huggingface"
     
     # OpenAI API Configuration
     OPENAI_API_KEY: str = ""

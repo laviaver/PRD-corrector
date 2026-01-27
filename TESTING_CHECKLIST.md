@@ -5,6 +5,45 @@
 
 ---
 
+## 🏃 How to Run Tests
+
+### Backend (from project root or `backend/`)
+
+```bash
+cd backend
+source venv/bin/activate   # or: . venv/Scripts/activate on Windows
+```
+
+| What | Command |
+|------|---------|
+| **Unit tests** (fast, no server) | `python -m pytest tests/unit -v` |
+| **Contract tests** (API shapes; uses Ollama provider so app boots) | `python -m pytest tests/contract -v` |
+| **All backend tests + coverage** | `python -m pytest tests/ -v` |
+
+Contract tests set `LLM_PROVIDER=ollama` so the app starts without Groq. They only check request/response shape; background analysis may still run if you have Ollama. To run contract tests with your normal provider (e.g. Groq), use:
+
+```bash
+LLM_PROVIDER=groq python -m pytest tests/contract -v
+```
+
+(Requires Groq API key in `backend/.env` and a compatible `openai` client.)
+
+### Frontend
+
+```bash
+cd frontend
+npm run test          # run once
+npm run test:ui       # interactive UI
+npm run test:coverage # with coverage
+```
+
+### Full flow (manual)
+
+1. Start app: `./start.sh` (or backend + frontend separately).
+2. Use [TESTING_CHECKLIST](#-testing-strategy) below for manual UI/API checks.
+
+---
+
 ## 🎯 Testing Strategy
 
 This checklist covers all user stories, edge cases, and integration scenarios for the PRD Reviewer application.

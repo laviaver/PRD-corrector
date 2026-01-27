@@ -2,8 +2,8 @@
 LLM service for AI-powered PRD analysis.
 
 This module supports multiple LLM providers:
+- Groq (default, free tier, very fast)
 - Ollama (free, local, no API key needed)
-- Groq (free tier, very fast)
 - OpenAI (paid)
 - Hugging Face (free tier)
 """
@@ -19,10 +19,12 @@ logger = get_logger(__name__)
 # Try to import providers (optional dependencies)
 try:
     from openai import OpenAI as OpenAIClient
+    import httpx
     OPENAI_AVAILABLE = True
 except ImportError:
     OPENAI_AVAILABLE = False
     OpenAIClient = None
+    httpx = None
 
 try:
     import requests
@@ -49,9 +51,9 @@ class LLMService:
         elif self.provider == "huggingface":
             self._init_huggingface()
         else:
-            logger.warning(f"Unknown LLM provider: {self.provider}. Defaulting to Ollama.")
-            self.provider = "ollama"
-            self._init_ollama()
+            logger.warning(f"Unknown LLM provider: {self.provider}. Defaulting to Groq.")
+            self.provider = "groq"
+            self._init_groq()
 
     def _init_ollama(self):
         """Initialize Ollama client (local, free, no API key needed)."""
@@ -66,14 +68,16 @@ class LLMService:
         if not OPENAI_AVAILABLE:
             raise ImportError("openai library required for Groq. Install with: pip install openai")
         if not settings.GROQ_API_KEY:
-            logger.warning("Groq API key not configured. Falling back to Ollama.")
-            self.provider = "ollama"
-            self._init_ollama()
-            return
-        # Groq uses OpenAI-compatible API
+            logger.warning("Groq API key not configured. Set GROQ_API_KEY in .env or use another provider.")
+            raise ValueError("Groq API key required. Set GROQ_API_KEY in backend/.env")
+        # Groq uses OpenAI-compatible API. Pass a custom http_client to avoid
+        # "proxies" kwarg errors and set a timeout so we don't hang forever.
+        timeout = httpx.Timeout(120.0) if httpx else None
+        http_client = httpx.Client(timeout=timeout) if httpx else None
         self.client = OpenAIClient(
             api_key=settings.GROQ_API_KEY,
-            base_url="https://api.groq.com/openai/v1"
+            base_url="https://api.groq.com/openai/v1",
+            http_client=http_client,
         )
         logger.info("Initialized Groq provider")
 
@@ -82,9 +86,9 @@ class LLMService:
         if not OPENAI_AVAILABLE:
             raise ImportError("openai library required. Install with: pip install openai")
         if not settings.OPENAI_API_KEY:
-            logger.warning("OpenAI API key not configured. Falling back to Ollama.")
-            self.provider = "ollama"
-            self._init_ollama()
+            logger.warning("OpenAI API key not configured. Falling back to Groq.")
+            self.provider = "groq"
+            self._init_groq()
             return
         self.client = OpenAIClient(api_key=settings.OPENAI_API_KEY)
         logger.info("Initialized OpenAI provider")
@@ -94,9 +98,9 @@ class LLMService:
         if not REQUESTS_AVAILABLE:
             raise ImportError("requests library required for Hugging Face. Install with: pip install requests")
         if not settings.HUGGINGFACE_API_KEY:
-            logger.warning("Hugging Face API key not configured. Falling back to Ollama.")
-            self.provider = "ollama"
-            self._init_ollama()
+            logger.warning("Hugging Face API key not configured. Falling back to Groq.")
+            self.provider = "groq"
+            self._init_groq()
             return
         self.api_key = settings.HUGGINGFACE_API_KEY
         logger.info("Initialized Hugging Face provider")
@@ -190,7 +194,7 @@ class LLMService:
         """Analyze using Groq (free tier, very fast)."""
         try:
             response = self.client.chat.completions.create(
-                model="llama-3.1-70b-versatile",  # Free model on Groq
+                model="llama-3.3-70b-versatile",  # Current Groq model (3.1 was decommissioned)
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
@@ -198,6 +202,7 @@ class LLMService:
                 temperature=0.3,
                 max_tokens=4000,
                 response_format={"type": "json_object"},
+                timeout=90.0,  # Fail fast if Groq doesn't respond in 90s
             )
             analysis = response.choices[0].message.content
             logger.info(f"Groq analysis completed. Response length: {len(analysis) if analysis else 0}")

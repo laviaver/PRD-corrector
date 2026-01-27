@@ -53,19 +53,22 @@ apiClient.interceptors.response.use(
       const status = error.response.status;
       const data = error.response.data as { error?: string; message?: string };
       
+      const msg = (data as { message?: string; error?: string; detail?: string }).detail
+        ?? (data as { message?: string; error?: string }).message
+        ?? (data as { message?: string; error?: string }).error;
       switch (status) {
         case 400:
-          throw new Error(data.message || 'Bad request');
+          throw new Error(msg || 'Bad request');
         case 401:
           throw new Error('Unauthorized');
         case 404:
-          throw new Error('Resource not found');
+          throw new Error(msg || 'Resource not found');
         case 422:
-          throw new Error(data.message || 'Validation error');
+          throw new Error(msg || 'Validation error');
         case 500:
-          throw new Error('Internal server error');
+          throw new Error(msg || 'Internal server error');
         default:
-          throw new Error(data.message || `Request failed with status ${status}`);
+          throw new Error(msg || `Request failed with status ${status}`);
       }
     } else if (error.request) {
       // Request made but no response received
