@@ -47,16 +47,30 @@ class LLMService:
             from src.services.prompts import PRD_ANALYSIS_USER_PROMPT_TEMPLATE
             user_prompt = PRD_ANALYSIS_USER_PROMPT_TEMPLATE.format(prd_content=prd_content)
             
-            response: ChatCompletion = self.client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                temperature=0.3,  # Lower temperature for more consistent, focused responses
-                max_tokens=4000,  # Increased for longer PRDs and more suggestions
-                response_format={"type": "json_object"},  # Force JSON output
-            )
+            # Try with JSON mode first (requires GPT-4-turbo or newer)
+            try:
+                response: ChatCompletion = self.client.chat.completions.create(
+                    model="gpt-4-turbo-preview",  # Use turbo for JSON mode support
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=0.3,  # Lower temperature for more consistent, focused responses
+                    max_tokens=4000,  # Increased for longer PRDs and more suggestions
+                    response_format={"type": "json_object"},  # Force JSON output
+                )
+            except Exception as e:
+                # Fallback to regular GPT-4 if JSON mode not supported
+                logger.warning(f"JSON mode not available, using standard mode: {e}")
+                response: ChatCompletion = self.client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    temperature=0.3,
+                    max_tokens=4000,
+                )
 
             analysis = response.choices[0].message.content
             logger.info(f"LLM analysis completed successfully. Response length: {len(analysis) if analysis else 0}")
