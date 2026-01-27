@@ -47,9 +47,17 @@ class AnalyzerService:
             # Parse LLM response into suggestions
             suggestions = self._parse_llm_response(llm_response, analysis.id)
             
-            # If no suggestions found, create a default one to indicate analysis completed
+            # If no suggestions found, log and create helpful default
             if not suggestions:
-                logger.warning(f"No suggestions parsed from LLM response. Response: {llm_response[:500]}")
+                logger.warning(f"No suggestions parsed from LLM response. Response length: {len(llm_response)}, Preview: {llm_response[:500]}")
+                # Try to parse the raw response to see what we got
+                try:
+                    import json
+                    parsed = json.loads(llm_response)
+                    logger.warning(f"Parsed JSON structure: {type(parsed)}, Keys: {list(parsed.keys()) if isinstance(parsed, dict) else 'N/A'}")
+                except:
+                    pass
+                
                 # Create a default suggestion indicating the analysis completed but found no issues
                 # This should rarely happen with the improved prompt
                 default_suggestion = Suggestion(
@@ -57,7 +65,7 @@ class AnalyzerService:
                     category=SuggestionCategory.BEST_PRACTICES,
                     priority=SuggestionPriority.LOW,
                     title="Analysis completed - review the PRD manually",
-                    explanation="The automated analysis completed but did not generate specific suggestions. Please review the PRD manually for best practices.",
+                    explanation="The automated analysis completed but did not generate specific suggestions. This might indicate the PRD is well-structured, or there was an issue parsing the LLM response. Please review the PRD manually for best practices.",
                 )
                 suggestions = [default_suggestion]
 

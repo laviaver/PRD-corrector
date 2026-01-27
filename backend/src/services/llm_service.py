@@ -134,10 +134,24 @@ class LLMService:
     def _analyze_with_ollama(self, system_prompt: str, user_prompt: str) -> str:
         """Analyze using Ollama (local, free)."""
         try:
+            # Normalize model name (remove :latest suffix if present, Ollama handles it)
+            model_name = self.model.split(":")[0] if ":" in self.model else self.model
+            
+            # First, ensure model is available (this will trigger model load if needed)
+            try:
+                check_response = requests.get(f"{self.base_url}/api/tags", timeout=5)
+                if check_response.status_code == 200:
+                    models = check_response.json().get("models", [])
+                    model_found = any(m.get("name", "").startswith(model_name) for m in models)
+                    if not model_found:
+                        logger.warning(f"Model {model_name} not found in Ollama. Available models: {[m.get('name') for m in models]}")
+            except Exception as e:
+                logger.warning(f"Could not check Ollama models: {e}")
+            
             response = requests.post(
                 f"{self.base_url}/api/chat",
                 json={
-                    "model": self.model,
+                    "model": model_name,  # Use normalized name
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt},
@@ -149,17 +163,27 @@ class LLMService:
                     },
                     "format": "json",  # Request JSON format
                 },
-                timeout=120,  # 2 minute timeout
+                timeout=180,  # 3 minute timeout (first call can be slow as model loads)
             )
             response.raise_for_status()
             result = response.json()
             analysis = result.get("message", {}).get("content", "")
             
-            logger.info(f"Ollama analysis completed. Response length: {len(analysis) if analysis else 0}")
+            if not analysis:
+                logger.warning("Ollama returned empty response")
+                return '{"suggestions": []}'
+            
+            logger.info(f"Ollama analysis completed. Response length: {len(analysis)}")
             return self._normalize_json_response(analysis)
             
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Ollama request timed out: {e}")
+            raise Exception("Ollama request timed out. The model might be loading. Please try again in a moment.")
         except requests.exceptions.RequestException as e:
             logger.error(f"Ollama API call failed: {e}", exc_info=True)
+            # Provide more helpful error message
+            if "Connection refused" in str(e) or "Failed to establish" in str(e):
+                raise Exception("Cannot connect to Ollama. Make sure Ollama is running: 'ollama serve'")
             raise Exception(f"Ollama request failed: {e}")
 
     def _analyze_with_groq(self, system_prompt: str, user_prompt: str) -> str:
