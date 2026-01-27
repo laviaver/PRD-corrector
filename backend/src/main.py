@@ -9,15 +9,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from backend.src.api.middleware.error_handler import (
+from src.api.middleware.error_handler import (
     PRDReviewerError,
     error_handler,
     http_exception_handler,
     prd_reviewer_error_handler,
     validation_exception_handler,
 )
-from backend.src.config import settings
-from backend.src.utils.logger import setup_logging
+from src.config import settings
+from src.utils.logger import setup_logging
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(
-        "backend.src.main:app",
+        "src.main:app",
         host=settings.HOST,
         port=settings.PORT,
         reload=settings.DEBUG,

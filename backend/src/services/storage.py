@@ -7,10 +7,10 @@ This module provides session-based storage for MVP. Phase 2 will migrate to pers
 from typing import Dict, Optional
 from uuid import UUID
 
-from backend.src.models.analysis import Analysis
-from backend.src.models.prd import PRD
-from backend.src.models.suggestion import Suggestion
-from backend.src.utils.logger import get_logger
+from src.models.analysis import Analysis
+from src.models.prd import PRD
+from src.models.suggestion import Suggestion
+from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 

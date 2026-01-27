@@ -91,7 +91,7 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T020-TEST [P] [US1] Unit test for PRD model in backend/tests/unit/test_prd.py
+- [x] T020-TEST [P] [US1] Unit test for PRD model in backend/tests/unit/test_prd.py
 - [ ] T021-TEST [P] [US1] Unit test for file parser in backend/tests/unit/test_file_parser.py
 - [ ] T022-TEST [US1] Unit test for file validation service in backend/tests/unit/test_validation.py
 - [ ] T023-TEST [US1] Contract test for POST /api/analyze in backend/tests/contract/test_analyze.py
@@ -105,7 +105,7 @@
 
 ### Implementation for User Story 1
 
-- [ ] T020 [P] [US1] Create PRD model in backend/src/models/prd.py with id, content, filename, file_type, uploaded_at, size fields
+- [x] T020 [P] [US1] Create PRD model in backend/src/models/prd.py with id, content, filename, file_type, uploaded_at, size fields
 - [ ] T021 [P] [US1] Create file parser utility in backend/src/utils/file_parser.py for .txt, .md, and .docx extraction
 - [ ] T022 [US1] Implement file validation service in backend/src/services/validation.py (file type, size limits)
 - [ ] T023 [US1] Create POST /api/analyze endpoint in backend/src/api/routes/analyze.py for file upload and text paste
