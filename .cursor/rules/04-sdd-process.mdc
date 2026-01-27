@@ -13,6 +13,7 @@ Mandatory workflow steps that enforce Spec-Driven Development discipline.
 - **Skip git commits**: Every task = commit (no accumulated changes)
 - **Update DEVELOPMENT.md** without running spec-sync-check first
 - **Leave task.md stale**: Must reflect actual progress
+- **Forget to mark tasks.md**: Every completed task must have checkbox marked [x]
 - **Abandon work mid-step**: Mark as BLOCKED, document blocker
 
 ---
@@ -113,7 +114,14 @@ EOF
 
 ### Step 6: Update Progress Tracking
 
-**Update .work-items/002-prd-reviewer/task.md**:
+**a) Mark task complete in specs/002-prd-reviewer/tasks.md:**
+
+Change the checkbox from `[ ]` to `[x]` for the completed task:
+```markdown
+- [x] TASK## Task description
+```
+
+**b) Update .work-items/002-prd-reviewer/task.md**:
 ```markdown
 ### TASK##: Task Name (Date)
 
@@ -131,7 +139,7 @@ EOF
 **Commit**: {hash}
 ```
 
-**Update .cursor/DEVELOPMENT.md**:
+**c) Update .cursor/DEVELOPMENT.md**:
 - Current status section
 - Recently completed work (last 1-2 items)
 - Next steps
@@ -140,6 +148,7 @@ EOF
 
 - Verify commit succeeded
 - Review git log for correct message
+- Check tasks.md checkbox is marked [x]
 - Check task.md reflects completion
 - Acknowledge readiness for next task
 
@@ -180,8 +189,9 @@ If you catch yourself saying **WITHOUT completing all 7 steps**:
 1. "TASK## complete. Let me check reflections and spec.md sync..."
 2. [Run dependency-reflection and spec-sync-check]
 3. [Update spec.md/plan.md if triggered]
-4. [Stage, commit with proper message, update docs]
-5. "TASK## committed. Ready to start next task?"
+4. [Stage, commit with proper message]
+5. [Mark tasks.md checkbox [x], update task.md and DEVELOPMENT.md]
+6. "TASK## committed and progress updated. Ready to start next task?"
 
 ---
 

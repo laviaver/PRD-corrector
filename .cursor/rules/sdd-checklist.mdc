@@ -102,7 +102,15 @@ EOF
 
 ### 6. Update Progress Tracking
 
-**a) Update .work-items/002-prd-reviewer/task.md progress tracker:**
+**a) Mark task as complete in specs/002-prd-reviewer/tasks.md:**
+
+```markdown
+- [x] TASK## Task description
+```
+
+**Update the checkbox** from `[ ]` to `[x]` for the completed task in the appropriate phase section.
+
+**b) Update .work-items/002-prd-reviewer/task.md progress tracker:**
 
 ```markdown
 ### TASK##: Task Name (Date)
@@ -121,7 +129,7 @@ EOF
 **Commit**: {hash}
 ```
 
-**b) Update .cursor/DEVELOPMENT.md:**
+**c) Update .cursor/DEVELOPMENT.md:**
 - Current status section
 - Recently completed work (last 1-2 items)
 - Next steps
@@ -165,7 +173,7 @@ Use TodoWrite to track:
 3. **Update spec.md/plan.md if triggered (SYNC)**
 4. Stage changes (code + spec.md/plan.md if updated)
 5. Git commit
-6. Update task.md and DEVELOPMENT.md
+6. Update tasks.md (mark checkbox), task.md, and DEVELOPMENT.md
 7. Proceed to next
 
 **No exceptions.** This is the enhanced SDD way.
@@ -178,5 +186,6 @@ Before committing, verify:
 - ✅ spec.md/plan.md updated if needed (use spec-sync-check.mdc)
 - ✅ All related files staged (code + docs)
 - ✅ Commit message descriptive
-- ✅ Progress documented
+- ✅ tasks.md checkbox marked [x]
+- ✅ Progress documented (task.md, DEVELOPMENT.md)
 - ✅ Ready for next task
