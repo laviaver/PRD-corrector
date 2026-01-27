@@ -48,15 +48,15 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project structure with backend/ and frontend/ directories at repository root
-- [ ] T002 Initialize Python backend project with FastAPI dependencies in backend/
-- [ ] T003 [P] Initialize React TypeScript frontend project with Vite in frontend/
-- [ ] T004 [P] Configure Python linting (black, isort, flake8) in backend/
-- [ ] T005 [P] Configure TypeScript/ESLint for frontend in frontend/
-- [ ] T006 [P] Create backend requirements.txt with FastAPI, python-docx, openai, pydantic, uvicorn
-- [ ] T007 [P] Create frontend package.json with React, TypeScript, react-dropzone, react-pdf dependencies
-- [ ] T008 Create .env.example files for backend and frontend with placeholder API keys
-- [ ] T009 [P] Setup gitignore for Python and Node.js artifacts
+- [x] T001 Create project structure with backend/ and frontend/ directories at repository root
+- [x] T002 Initialize Python backend project with FastAPI dependencies in backend/
+- [x] T003 [P] Initialize React TypeScript frontend project with Vite in frontend/
+- [x] T004 [P] Configure Python linting (black, isort, flake8) in backend/
+- [x] T005 [P] Configure TypeScript/ESLint for frontend in frontend/
+- [x] T006 [P] Create backend requirements.txt with FastAPI, python-docx, openai, pydantic, uvicorn
+- [x] T007 [P] Create frontend package.json with React, TypeScript, react-dropzone, react-pdf dependencies
+- [x] T008 Create .env.example files for backend and frontend with placeholder API keys
+- [x] T009 [P] Setup gitignore for Python and Node.js artifacts
 
 ---
 
