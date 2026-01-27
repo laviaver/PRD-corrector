@@ -100,6 +100,21 @@ class StorageService:
         """
         return self._analyses.get(analysis_id)
 
+    def get_analysis_by_prd_id(self, prd_id: UUID) -> Optional[Analysis]:
+        """
+        Get analysis by PRD ID.
+
+        Args:
+            prd_id: PRD identifier
+
+        Returns:
+            Analysis if found, None otherwise
+        """
+        for analysis in self._analyses.values():
+            if analysis.prd_id == prd_id:
+                return analysis
+        return None
+
     def update_analysis(self, analysis: Analysis) -> bool:
         """
         Update an existing analysis.
