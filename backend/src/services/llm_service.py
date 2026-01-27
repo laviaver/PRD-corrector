@@ -159,11 +159,11 @@ class LLMService:
                     "stream": False,
                     "options": {
                         "temperature": 0.3,
-                        "num_predict": 4000,  # max tokens
+                        "num_predict": 2000,  # Reduced from 4000 for faster response
                     },
                     "format": "json",  # Request JSON format
                 },
-                timeout=180,  # 3 minute timeout (first call can be slow as model loads)
+                timeout=120,  # 2 minute timeout (reduced from 180)
             )
             response.raise_for_status()
             result = response.json()
