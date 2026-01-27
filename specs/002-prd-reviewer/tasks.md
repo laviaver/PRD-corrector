@@ -189,15 +189,15 @@
 
 ### Implementation for User Story 3
 
-- [ ] T045 [P] [US3] Create SuggestionCard component in frontend/src/components/SuggestionCard.tsx with expand/collapse
-- [ ] T046 [P] [US3] Create SuggestionList component in frontend/src/components/SuggestionList.tsx for categorized grouping
-- [ ] T047 [US3] Create ResultsPage component in frontend/src/pages/ResultsPage.tsx with three-panel layout (PRD content, suggestions, details)
-- [ ] T048 [US3] Implement suggestion filtering and sorting by priority in frontend/src/utils/suggestionUtils.ts
-- [ ] T049 [US3] Create PRD viewer component in frontend/src/components/PRDViewer.tsx to display original content
-- [ ] T050 [US3] Add suggestion category grouping logic in frontend/src/utils/categoryGrouping.ts
-- [ ] T051 [US3] Implement suggestion detail view in frontend/src/components/SuggestionDetail.tsx showing explanation, location, example
-- [ ] T052 [US3] Add navigation from UploadPage to ResultsPage after analysis completes
-- [ ] T053 [US3] Add summary statistics display in frontend/src/components/AnalysisSummary.tsx (total suggestions, by category, by priority)
+- [x] T045 [P] [US3] Create SuggestionCard component in frontend/src/components/SuggestionCard.tsx with expand/collapse
+- [x] T046 [P] [US3] Create SuggestionList component in frontend/src/components/SuggestionList.tsx for categorized grouping
+- [x] T047 [US3] Create ResultsPage component in frontend/src/pages/ResultsPage.tsx with three-panel layout (PRD content, suggestions, details)
+- [x] T048 [US3] Implement suggestion filtering and sorting by priority in frontend/src/utils/suggestionUtils.ts
+- [x] T049 [US3] Create PRD viewer component in frontend/src/components/PRDViewer.tsx to display original content
+- [x] T050 [US3] Add suggestion category grouping logic in frontend/src/utils/categoryGrouping.ts
+- [x] T051 [US3] Implement suggestion detail view in frontend/src/components/SuggestionDetail.tsx showing explanation, location, example
+- [x] T052 [US3] Add navigation from UploadPage to ResultsPage after analysis completes
+- [x] T053 [US3] Add summary statistics display in frontend/src/components/AnalysisSummary.tsx (total suggestions, by category, by priority)
 
 **Checkpoint**: At this point, User Story 3 should be fully functional - users can view and explore suggestions
 
@@ -227,17 +227,17 @@
 
 ### Implementation for User Story 4
 
-- [ ] T054 [P] [US4] Create Export model in backend/src/models/export.py with id, analysis_id, format, created_at fields
-- [ ] T055 [US4] Implement PDF export service in backend/src/services/export_service.py using reportlab or weasyprint
-- [ ] T056 [US4] Implement Markdown export service in backend/src/services/export_service.py
-- [ ] T057 [US4] Implement JSON export service in backend/src/services/export_service.py
-- [ ] T058 [US4] Create POST /api/export endpoint in backend/src/api/routes/export.py
-- [ ] T059 [P] [US4] Create ExportButton component in frontend/src/components/ExportButton.tsx with format selection
-- [ ] T060 [US4] Implement export API call in frontend/src/services/exportService.ts
-- [ ] T061 [US4] Add clipboard copy functionality in frontend/src/utils/clipboard.ts
-- [ ] T062 [US4] Create CopyButton component in frontend/src/components/CopyButton.tsx
-- [ ] T063 [US4] Add export options to ResultsPage (PDF, Markdown, JSON, Copy)
-- [ ] T064 [US4] Handle export file download in frontend with proper MIME types
+- [x] T054 [P] [US4] Create Export model in backend/src/models/export.py with id, analysis_id, format, created_at fields
+- [x] T055 [US4] Implement PDF export service in backend/src/services/export_service.py using reportlab or weasyprint
+- [x] T056 [US4] Implement Markdown export service in backend/src/services/export_service.py
+- [x] T057 [US4] Implement JSON export service in backend/src/services/export_service.py
+- [x] T058 [US4] Create POST /api/export endpoint in backend/src/api/routes/export.py
+- [x] T059 [P] [US4] Create ExportButton component in frontend/src/components/ExportButton.tsx with format selection
+- [x] T060 [US4] Implement export API call in frontend/src/services/exportService.ts
+- [x] T061 [US4] Add clipboard copy functionality in frontend/src/utils/clipboard.ts
+- [x] T062 [US4] Create CopyButton component in frontend/src/components/CopyButton.tsx
+- [x] T063 [US4] Add export options to ResultsPage (PDF, Markdown, JSON, Copy)
+- [x] T064 [US4] Handle export file download in frontend with proper MIME types
 
 **Checkpoint**: At this point, User Story 4 should be fully functional - users can export and share results
 
