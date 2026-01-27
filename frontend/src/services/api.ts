@@ -12,7 +12,7 @@ import { API_ENDPOINTS, API_CONFIG } from '../constants/api';
  * Create configured Axios instance.
  */
 const apiClient: AxiosInstance = axios.create({
-  baseURL: API_CONFIG.BASE_URL,
+  baseURL: '', // Don't set baseURL since endpoints already include full URLs
   timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
@@ -78,7 +78,9 @@ apiClient.interceptors.response.use(
  * Generic GET request helper.
  */
 export async function get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-  const response = await apiClient.get<T>(url, config);
+  // Use full URL if it starts with http, otherwise use baseURL
+  const fullUrl = url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url}`;
+  const response = await apiClient.get<T>(fullUrl, config);
   return response.data;
 }
 
@@ -90,7 +92,9 @@ export async function post<T>(
   data?: unknown,
   config?: AxiosRequestConfig
 ): Promise<T> {
-  const response = await apiClient.post<T>(url, data, config);
+  // Use full URL if it starts with http, otherwise use baseURL
+  const fullUrl = url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url}`;
+  const response = await apiClient.post<T>(fullUrl, data, config);
   return response.data;
 }
 
