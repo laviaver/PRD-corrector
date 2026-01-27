@@ -35,12 +35,14 @@ class AnalysisService:
         )
         analysis = storage.create_analysis(analysis)
 
-        # Start background processing
+        # Start background processing (don't await - let it run in background)
         try:
-            # Process asynchronously
-            await task_processor.process_analysis(prd_id)
+            # Create background task without awaiting
+            import asyncio
+            asyncio.create_task(task_processor.process_analysis(prd_id))
+            logger.info(f"Analysis task started in background for PRD: {prd_id}")
         except Exception as e:
-            logger.error(f"Failed to initiate analysis: {e}", exc_info=True)
+            logger.error(f"Failed to start analysis task: {e}", exc_info=True)
             analysis.status = AnalysisStatus.FAILED
             analysis.error_message = str(e)
             storage.update_analysis(analysis)

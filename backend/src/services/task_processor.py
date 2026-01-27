@@ -55,6 +55,23 @@ class TaskProcessor:
             Analysis ID
         """
         try:
+            # Get the analysis that was created (it should be PENDING)
+            from src.services.storage import storage
+            from src.services.analysis_service import analysis_service
+            
+            # Find the analysis for this PRD
+            analyses = storage.get_analyses_by_prd(prd.id)
+            if not analyses:
+                raise ValueError(f"No analysis found for PRD: {prd.id}")
+            
+            analysis = analyses[-1]  # Get the most recent one
+            
+            # Update status to PROCESSING
+            from src.models.analysis import AnalysisStatus
+            analysis.status = AnalysisStatus.PROCESSING
+            storage.update_analysis(analysis)
+            logger.info(f"Analysis status updated to PROCESSING: {analysis.id}")
+            
             # Run analysis (this is CPU/IO bound, so we run in executor)
             loop = asyncio.get_event_loop()
             analysis = await loop.run_in_executor(
@@ -64,6 +81,18 @@ class TaskProcessor:
             return analysis.id
         except Exception as e:
             logger.error(f"Background analysis failed: {e}", exc_info=True)
+            # Update analysis status to FAILED
+            try:
+                from src.services.storage import storage
+                from src.models.analysis import AnalysisStatus
+                analyses = storage.get_analyses_by_prd(prd.id)
+                if analyses:
+                    analysis = analyses[-1]
+                    analysis.status = AnalysisStatus.FAILED
+                    analysis.error_message = str(e)
+                    storage.update_analysis(analysis)
+            except:
+                pass
             raise
 
 
