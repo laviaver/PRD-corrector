@@ -12,8 +12,21 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
+    # LLM Provider Configuration
+    LLM_PROVIDER: str = "ollama"  # Options: "ollama", "groq", "openai", "huggingface"
+    
     # OpenAI API Configuration
     OPENAI_API_KEY: str = ""
+    
+    # Groq API Configuration (free tier available)
+    GROQ_API_KEY: str = ""
+    
+    # Hugging Face API Configuration
+    HUGGINGFACE_API_KEY: str = ""
+    
+    # Ollama Configuration (local, no API key needed)
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.2"  # Options: llama3.2, mistral, qwen, etc.
 
     # Server Configuration
     HOST: str = "0.0.0.0"
