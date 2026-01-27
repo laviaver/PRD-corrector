@@ -61,9 +61,10 @@ async def health():
     return {"status": "healthy"}
 
 
-# Include API routes (will be added in later phases)
-# from backend.src.api.routes import analyze, analysis, export
-# app.include_router(analyze.router, prefix="/api", tags=["analyze"])
+# Include API routes
+from src.api.routes import analyze
+
+app.include_router(analyze.router, prefix="/api", tags=["analyze"])
 # app.include_router(analysis.router, prefix="/api", tags=["analysis"])
 # app.include_router(export.router, prefix="/api", tags=["export"])
 

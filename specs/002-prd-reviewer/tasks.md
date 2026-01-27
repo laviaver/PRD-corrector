@@ -92,10 +92,10 @@
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
 - [x] T020-TEST [P] [US1] Unit test for PRD model in backend/tests/unit/test_prd.py
-- [ ] T021-TEST [P] [US1] Unit test for file parser in backend/tests/unit/test_file_parser.py
-- [ ] T022-TEST [US1] Unit test for file validation service in backend/tests/unit/test_validation.py
-- [ ] T023-TEST [US1] Contract test for POST /api/analyze in backend/tests/contract/test_analyze.py
-- [ ] T024-TEST [US1] Unit test for PRD service in backend/tests/unit/test_prd_service.py
+- [x] T021-TEST [P] [US1] Unit test for file parser in backend/tests/unit/test_file_parser.py
+- [x] T022-TEST [US1] Unit test for file validation service in backend/tests/unit/test_validation.py
+- [x] T023-TEST [US1] Contract test for POST /api/analyze in backend/tests/contract/test_analyze.py
+- [x] T024-TEST [US1] Unit test for PRD service in backend/tests/unit/test_prd_service.py
 - [ ] T025-TEST [P] [US1] Unit test for FileUpload component in frontend/tests/unit/FileUpload.test.tsx
 - [ ] T026-TEST [P] [US1] Unit test for TextInput component in frontend/tests/unit/TextInput.test.tsx
 - [ ] T027-TEST [US1] Integration test for UploadPage in frontend/tests/integration/UploadPage.test.tsx
@@ -106,10 +106,10 @@
 ### Implementation for User Story 1
 
 - [x] T020 [P] [US1] Create PRD model in backend/src/models/prd.py with id, content, filename, file_type, uploaded_at, size fields
-- [ ] T021 [P] [US1] Create file parser utility in backend/src/utils/file_parser.py for .txt, .md, and .docx extraction
-- [ ] T022 [US1] Implement file validation service in backend/src/services/validation.py (file type, size limits)
-- [ ] T023 [US1] Create POST /api/analyze endpoint in backend/src/api/routes/analyze.py for file upload and text paste
-- [ ] T024 [US1] Implement PRD creation service in backend/src/services/prd_service.py to store PRD in memory
+- [x] T021 [P] [US1] Create file parser utility in backend/src/utils/file_parser.py for .txt, .md, and .docx extraction
+- [x] T022 [US1] Implement file validation service in backend/src/services/validation.py (file type, size limits)
+- [x] T023 [US1] Create POST /api/analyze endpoint in backend/src/api/routes/analyze.py for file upload and text paste
+- [x] T024 [US1] Implement PRD creation service in backend/src/services/prd_service.py to store PRD in memory
 - [ ] T025 [P] [US1] Create FileUpload component in frontend/src/components/FileUpload.tsx with drag-and-drop support
 - [ ] T026 [P] [US1] Create TextInput component in frontend/src/components/TextInput.tsx for pasting PRD content
 - [ ] T027 [US1] Create UploadPage component in frontend/src/pages/UploadPage.tsx integrating FileUpload and TextInput
