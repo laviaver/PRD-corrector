@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
   // Analysis endpoints
   ANALYZE: `${API_BASE_URL}/analyze`,
   ANALYSIS: (id: string) => `${API_BASE_URL}/analysis/${id}`,
+  ANALYSIS_BY_PRD: (prdId: string) => `${API_BASE_URL}/analysis/by-prd/${prdId}`,
   ANALYSIS_STATUS: (id: string) => `${API_BASE_URL}/analysis/${id}/status`,
   
   // Export endpoints

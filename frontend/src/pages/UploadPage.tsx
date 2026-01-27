@@ -42,7 +42,12 @@ export default function UploadPage() {
 
     try {
       const response = await pastePRDText(text);
-      navigate(`/analysis/${response.prd_id}`);
+      // Navigate with analysis_id, not prd_id
+      if (response.analysis_id) {
+        navigate(`/analysis/${response.analysis_id}`);
+      } else {
+        setError('Analysis ID not returned from server');
+      }
     } catch (err) {
       const errorMessage = formatError(err);
       setError(errorMessage);
@@ -63,7 +68,12 @@ export default function UploadPage() {
 
     try {
       const response = await uploadPRDFile(selectedFile);
-      navigate(`/analysis/${response.prd_id}`);
+      // Navigate with analysis_id, not prd_id
+      if (response.analysis_id) {
+        navigate(`/analysis/${response.analysis_id}`);
+      } else {
+        setError('Analysis ID not returned from server');
+      }
     } catch (err) {
       const errorMessage = formatError(err);
       setError(errorMessage);

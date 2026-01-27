@@ -56,9 +56,17 @@ export async function getAnalysisStatus(analysisId: string): Promise<AnalysisSta
 }
 
 /**
- * Get analysis results with suggestions.
+ * Get analysis results with suggestions by analysis ID.
  */
 export async function getAnalysis(analysisId: string): Promise<AnalysisResult> {
   // Use relative path for Vite proxy
   return get<AnalysisResult>(API_ENDPOINTS.ANALYSIS(analysisId));
+}
+
+/**
+ * Get analysis results with suggestions by PRD ID.
+ */
+export async function getAnalysisByPRD(prdId: string): Promise<AnalysisResult> {
+  // Use relative path for Vite proxy
+  return get<AnalysisResult>(API_ENDPOINTS.ANALYSIS_BY_PRD(prdId));
 }

@@ -51,6 +51,42 @@ async def get_analysis(analysis_id: str):
     }
 
 
+@router.get("/analysis/by-prd/{prd_id}")
+async def get_analysis_by_prd(prd_id: str):
+    """
+    Get analysis results by PRD ID.
+
+    Args:
+        prd_id: PRD identifier
+
+    Returns:
+        Analysis with suggestions
+    """
+    try:
+        prd_uuid = UUID(prd_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid PRD ID format",
+        )
+
+    # Get analysis by PRD ID
+    analysis = storage.get_analysis_by_prd_id(prd_uuid)
+    if not analysis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Analysis not found for this PRD",
+        )
+
+    # Get suggestions
+    suggestions = analysis_service.get_suggestions(analysis.id)
+
+    return {
+        "analysis": analysis.model_dump(),
+        "suggestions": [s.model_dump() for s in suggestions],
+    }
+
+
 @router.get("/analysis/{analysis_id}/status")
 async def get_analysis_status(analysis_id: str):
     """

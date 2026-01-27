@@ -4,7 +4,7 @@ import AnalysisStatus from '../components/AnalysisStatus';
 import SuggestionList from '../components/SuggestionList';
 import AnalysisSummary from '../components/AnalysisSummary';
 import ExportButton from '../components/ExportButton';
-import { getAnalysis, AnalysisResult } from '../services/analysisService';
+import { getAnalysis, getAnalysisByPRD, AnalysisResult } from '../services/analysisService';
 import { formatError, logError } from '../utils/errorHandler';
 import './ResultsPage.css';
 
@@ -17,21 +17,26 @@ export default function ResultsPage() {
 
   useEffect(() => {
     if (!prdId) {
-      setError('PRD ID is required');
+      setError('Analysis ID is required');
       setLoading(false);
       return;
     }
 
-    // We need to get the analysis ID from the PRD
-    // For now, we'll use the PRD ID as a placeholder
-    // In a real implementation, we'd fetch the analysis ID from the PRD
+    // Try to load as analysis_id first, then fallback to PRD ID lookup
     loadAnalysis(prdId);
   }, [prdId]);
 
-  const loadAnalysis = async (analysisId: string) => {
+  const loadAnalysis = async (id: string) => {
     try {
       setLoading(true);
-      const result = await getAnalysis(analysisId);
+      // First try as analysis_id
+      let result: AnalysisResult;
+      try {
+        result = await getAnalysis(id);
+      } catch (err) {
+        // If not found, try as PRD ID
+        result = await getAnalysisByPRD(id);
+      }
       setAnalysis(result);
       setError('');
     } catch (err) {
@@ -45,6 +50,7 @@ export default function ResultsPage() {
 
   const handleAnalysisComplete = () => {
     if (prdId) {
+      // prdId is actually analysis_id
       loadAnalysis(prdId);
     }
   };
