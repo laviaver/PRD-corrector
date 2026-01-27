@@ -62,10 +62,10 @@ async def health():
 
 
 # Include API routes
-from src.api.routes import analyze
+from src.api.routes import analyze, analysis
 
 app.include_router(analyze.router, prefix="/api", tags=["analyze"])
-# app.include_router(analysis.router, prefix="/api", tags=["analysis"])
+app.include_router(analysis.router, prefix="/api", tags=["analysis"])
 # app.include_router(export.router, prefix="/api", tags=["export"])
 
 

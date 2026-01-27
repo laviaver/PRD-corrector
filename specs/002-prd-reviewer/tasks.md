@@ -96,12 +96,12 @@
 - [x] T022-TEST [US1] Unit test for file validation service in backend/tests/unit/test_validation.py
 - [x] T023-TEST [US1] Contract test for POST /api/analyze in backend/tests/contract/test_analyze.py
 - [x] T024-TEST [US1] Unit test for PRD service in backend/tests/unit/test_prd_service.py
-- [ ] T025-TEST [P] [US1] Unit test for FileUpload component in frontend/tests/unit/FileUpload.test.tsx
-- [ ] T026-TEST [P] [US1] Unit test for TextInput component in frontend/tests/unit/TextInput.test.tsx
-- [ ] T027-TEST [US1] Integration test for UploadPage in frontend/tests/integration/UploadPage.test.tsx
-- [ ] T028-TEST [US1] Unit test for PRD service API call in frontend/tests/unit/prdService.test.ts
-- [ ] T029-TEST [US1] Unit test for ContentPreview component in frontend/tests/unit/ContentPreview.test.tsx
-- [ ] T030-TEST [US1] Integration test for error handling in frontend/tests/integration/errorHandling.test.tsx
+- [x] T025-TEST [P] [US1] Unit test for FileUpload component in frontend/tests/unit/FileUpload.test.tsx
+- [x] T026-TEST [P] [US1] Unit test for TextInput component in frontend/tests/unit/TextInput.test.tsx
+- [x] T027-TEST [US1] Integration test for UploadPage in frontend/tests/integration/UploadPage.test.tsx
+- [x] T028-TEST [US1] Unit test for PRD service API call in frontend/tests/unit/prdService.test.ts
+- [x] T029-TEST [US1] Unit test for ContentPreview component in frontend/tests/unit/ContentPreview.test.tsx
+- [x] T030-TEST [US1] Integration test for error handling in frontend/tests/integration/errorHandling.test.tsx
 
 ### Implementation for User Story 1
 
@@ -110,12 +110,12 @@
 - [x] T022 [US1] Implement file validation service in backend/src/services/validation.py (file type, size limits)
 - [x] T023 [US1] Create POST /api/analyze endpoint in backend/src/api/routes/analyze.py for file upload and text paste
 - [x] T024 [US1] Implement PRD creation service in backend/src/services/prd_service.py to store PRD in memory
-- [ ] T025 [P] [US1] Create FileUpload component in frontend/src/components/FileUpload.tsx with drag-and-drop support
-- [ ] T026 [P] [US1] Create TextInput component in frontend/src/components/TextInput.tsx for pasting PRD content
-- [ ] T027 [US1] Create UploadPage component in frontend/src/pages/UploadPage.tsx integrating FileUpload and TextInput
-- [ ] T028 [US1] Implement file upload API call in frontend/src/services/prdService.ts
-- [ ] T029 [US1] Add content preview display in frontend/src/components/ContentPreview.tsx showing first 500 chars
-- [ ] T030 [US1] Add file validation error handling in frontend components (file type, size errors)
+- [x] T025 [P] [US1] Create FileUpload component in frontend/src/components/FileUpload.tsx with drag-and-drop support
+- [x] T026 [P] [US1] Create TextInput component in frontend/src/components/TextInput.tsx for pasting PRD content
+- [x] T027 [US1] Create UploadPage component in frontend/src/pages/UploadPage.tsx integrating FileUpload and TextInput
+- [x] T028 [US1] Implement file upload API call in frontend/src/services/prdService.ts
+- [x] T029 [US1] Add content preview display in frontend/src/components/ContentPreview.tsx showing first 500 chars
+- [x] T030 [US1] Add file validation error handling in frontend components (file type, size errors)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - users can upload files or paste text and see preview
 

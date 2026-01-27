@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from src.services.prd_service import prd_service
+from src.services.analysis_service import analysis_service
 from src.services.validation import ValidationError
 from src.utils.file_parser import FileParseError
 from src.utils.logger import get_logger
@@ -73,12 +74,13 @@ async def analyze_prd(
             prd = prd_service.create_prd_from_text(text)
             logger.info(f"PRD created from text: {prd.id}")
 
-        # TODO: Initiate analysis (will be implemented in Phase 4)
-        # For now, just return PRD ID
+        # Initiate analysis
+        analysis = await analysis_service.initiate_analysis(prd.id)
+
         return AnalyzeResponse(
             prd_id=str(prd.id),
-            analysis_id=None,
-            message="PRD uploaded successfully. Analysis will be initiated in next phase.",
+            analysis_id=str(analysis.id),
+            message="PRD uploaded successfully. Analysis initiated.",
         )
 
     except ValidationError as e:
