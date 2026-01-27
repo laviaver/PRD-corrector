@@ -43,19 +43,45 @@ class LLMService:
             raise ValueError("OpenAI API key not configured")
 
         try:
+            # Use user prompt template for better structure
+            from src.services.prompts import PRD_ANALYSIS_USER_PROMPT_TEMPLATE
+            user_prompt = PRD_ANALYSIS_USER_PROMPT_TEMPLATE.format(prd_content=prd_content)
+            
             response: ChatCompletion = self.client.chat.completions.create(
                 model="gpt-4",
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prd_content},
+                    {"role": "user", "content": user_prompt},
                 ],
-                temperature=0.7,
-                max_tokens=2000,
+                temperature=0.3,  # Lower temperature for more consistent, focused responses
+                max_tokens=4000,  # Increased for longer PRDs and more suggestions
+                response_format={"type": "json_object"},  # Force JSON output
             )
 
             analysis = response.choices[0].message.content
-            logger.info("LLM analysis completed successfully")
-            return analysis or ""
+            logger.info(f"LLM analysis completed successfully. Response length: {len(analysis) if analysis else 0}")
+            
+            if not analysis:
+                logger.warning("LLM returned empty response")
+                return '{"suggestions": []}'
+            
+            # If response_format is json_object, wrap in suggestions key if needed
+            try:
+                import json
+                parsed = json.loads(analysis)
+                # If it's already an array, wrap it
+                if isinstance(parsed, list):
+                    analysis = json.dumps({"suggestions": parsed})
+                # If it's an object but not wrapped, check if it has suggestions
+                elif isinstance(parsed, dict) and "suggestions" not in parsed and len(parsed) > 0:
+                    # Assume it's a single suggestion, wrap it
+                    analysis = json.dumps({"suggestions": [parsed]})
+            except json.JSONDecodeError:
+                logger.warning(f"LLM response is not valid JSON: {analysis[:200]}")
+                # Return empty suggestions if JSON parsing fails
+                return '{"suggestions": []}'
+            
+            return analysis
 
         except Exception as e:
             logger.error(f"LLM API call failed: {e}", exc_info=True)

@@ -41,12 +41,25 @@ class AnalyzerService:
         analysis = storage.create_analysis(analysis)
 
         try:
-            # Get LLM analysis
-            user_prompt = PRD_ANALYSIS_USER_PROMPT_TEMPLATE.format(prd_content=prd.content)
+            # Get LLM analysis (prompt is now handled inside llm_service)
             llm_response = llm_service.analyze_prd(prd.content, PRD_ANALYSIS_SYSTEM_PROMPT)
 
             # Parse LLM response into suggestions
             suggestions = self._parse_llm_response(llm_response, analysis.id)
+            
+            # If no suggestions found, create a default one to indicate analysis completed
+            if not suggestions:
+                logger.warning(f"No suggestions parsed from LLM response. Response: {llm_response[:500]}")
+                # Create a default suggestion indicating the analysis completed but found no issues
+                # This should rarely happen with the improved prompt
+                default_suggestion = Suggestion(
+                    analysis_id=analysis.id,
+                    category=SuggestionCategory.BEST_PRACTICES,
+                    priority=SuggestionPriority.LOW,
+                    title="Analysis completed - review the PRD manually",
+                    explanation="The automated analysis completed but did not generate specific suggestions. Please review the PRD manually for best practices.",
+                )
+                suggestions = [default_suggestion]
 
             # Store suggestions
             for suggestion in suggestions:
