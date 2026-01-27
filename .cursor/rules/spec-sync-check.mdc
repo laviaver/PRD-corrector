@@ -1,0 +1,227 @@
+# Spec Sync Check
+
+**Purpose**: Ensure specifications stay synchronized with implementation.
+
+## When to Use
+
+Run this check after completing ANY task that:
+- Adds or modifies API endpoints
+- Changes data models or schemas
+- Completes a phase or major milestone
+- Adds new packages or services
+- Modifies configuration or environment setup
+
+## Automatic Trigger Detection
+
+After completing a task, check if any of these conditions apply:
+
+### High-Priority Triggers (MUST update spec.md/plan.md)
+
+#### 1. Phase Completion
+**Detection**: Completing the final task of any phase (e.g., Phase 1, Phase 2, User Story completion)
+
+**Update Sections**:
+- plan.md → Phase 0 & Phase 1 Summary section
+- plan.md → Implementation Status (if tracked)
+- Last Updated date in plan.md
+
+**Example**: Completing Phase 2 (Foundational)
+- Update plan.md to mark Phase 2 as "COMPLETE ✅"
+- Update DEVELOPMENT.md current status
+
+#### 2. New Endpoint Added
+**Detection**: New handler file created/modified in `backend/src/api/`
+
+**Update Sections**:
+- contracts/api.yaml → Add new endpoint definition
+- data-model.md → Update API Response Models if needed
+- spec.md → Update Functional Requirements if significant
+
+**Example**: Adding `/api/analysis/{id}/status`
+```yaml
+# contracts/api.yaml
+/analysis/{analysis_id}/status:
+  get:
+    summary: Get analysis status
+    ...
+```
+
+#### 3. New Service/Package Created
+**Detection**: New directory created in `backend/src/` or `frontend/src/`
+
+**Update Sections**:
+- plan.md → Project Structure section
+- spec.md → Technical Requirements if significant
+
+**Example**: Adding `backend/src/services/analyzer.py`
+- Update plan.md Project Structure to reflect new service
+
+#### 4. Model Changes
+**Detection**: Modifications to `backend/src/models/` or data-model.md
+
+**Update Sections**:
+- data-model.md → Update entity fields, validation rules
+- contracts/api.yaml → Update request/response schemas if needed
+
+### Medium-Priority Triggers (SHOULD update spec.md/plan.md)
+
+#### 5. Configuration Changes
+**Detection**: Modifications to environment variables, config files
+
+**Update Sections**:
+- plan.md → Technical Context (if dependencies change)
+- quickstart.md → Update setup instructions if needed
+
+#### 6. Test Infrastructure Changes
+**Detection**: New test patterns, test utilities
+
+**Update Sections**:
+- plan.md → Testing section
+- quickstart.md → Testing section if commands change
+
+### Low-Priority Triggers (MAY update spec.md/plan.md)
+
+#### 7. Performance Improvements (> 20% improvement)
+**Detection**: Significant performance changes
+
+**Update Sections**:
+- plan.md → Performance Goals section
+- spec.md → Performance Requirements if significant
+
+#### 8. UI/UX Changes
+**Detection**: Significant frontend changes
+
+**Update Sections**:
+- spec.md → UI/UX Requirements section
+
+## Decision Matrix
+
+| Files Changed | Update spec.md/plan.md? | Sections to Update |
+|---------------|-----------------|-------------------|
+| `backend/src/api/**/*.py` | **YES** | contracts/api.yaml, data-model.md |
+| `backend/src/models/*.py` | **YES** | data-model.md, contracts/api.yaml schemas |
+| `backend/src/services/*.py` | **YES** | plan.md Project Structure, spec.md if significant |
+| `frontend/src/components/*.tsx` | **MAYBE** | spec.md UI/UX Requirements if significant |
+| `frontend/src/services/*.ts` | **MAYBE** | contracts/api.yaml if API contract changes |
+| `backend/tests/**/*.py` | **MAYBE** | plan.md Testing section if patterns change |
+| Completing phase step | **YES** | plan.md Implementation Status, DEVELOPMENT.md |
+
+## Spec Update Checklist
+
+When updating `specs/002-prd-reviewer/spec.md` or `plan.md`:
+
+### Always Check
+- [ ] plan.md: **Last Updated** date is today
+- [ ] plan.md: **Phase 0 & Phase 1 Summary** reflects current status
+
+### If Endpoints Changed
+- [ ] contracts/api.yaml: **Endpoints** include all new/modified endpoints
+- [ ] data-model.md: **API Response Models** match actual responses
+
+### If Models Changed
+- [ ] data-model.md: **Entity fields** match actual model fields
+- [ ] data-model.md: **Validation Rules** still valid
+- [ ] contracts/api.yaml: **Schemas** match model structure
+
+### If Phase Completed
+- [ ] plan.md: Phase marked as **COMPLETE ✅**
+- [ ] plan.md: Phase summary updated
+
+### If Architecture Changed
+- [ ] plan.md: **Project Structure** includes new packages/directories
+- [ ] spec.md: **Technical Requirements** updated if significant
+
+### If Configuration Changed
+- [ ] plan.md: **Technical Context** reflects new dependencies
+- [ ] quickstart.md: Setup instructions still accurate
+
+## Integration with SDD Workflow
+
+This check happens at **Step 3: SYNC** in the enhanced SDD cycle:
+
+```
+4. REFACTOR → Clean up while tests pass
+5. REFLECT  → Check dependency reflections
+6. SYNC     → Update spec.md/plan.md if triggered ← YOU ARE HERE
+7. COMMIT   → Commit code + docs together
+```
+
+**Critical Rule**: If spec.md/plan.md is updated, include it in the same commit as the code changes.
+
+## Example Usage
+
+### Scenario: Completed implementing `/api/analyze` endpoint
+
+**Step 1: Check triggers**
+- ✅ New endpoint added (High-Priority Trigger #2)
+- ✅ Service created (High-Priority Trigger #3)
+
+**Step 2: Open files and update**
+```bash
+# contracts/api.yaml - Add endpoint
+/analyze:
+  post:
+    summary: Upload and analyze a PRD
+    ...
+
+# plan.md - Update Last Updated
+**Last Updated**: 2024-12-19
+
+# data-model.md - Ensure models documented
+# (PRD, Analysis models should already be there)
+```
+
+**Step 3: Stage with code changes**
+```bash
+git add backend/src/api/routes/analyze.py
+git add backend/src/services/prd_service.py
+git add contracts/api.yaml
+git add plan.md
+git commit -m "feat(backend): implement /api/analyze endpoint"
+```
+
+### Scenario: Completed Phase 2 (Foundational)
+
+**Step 1: Check triggers**
+- ✅ Phase completion (High-Priority Trigger #1)
+
+**Step 2: Update plan.md**
+```markdown
+## Phase 0 & Phase 1 Summary
+
+### Phase 2: Foundational (Completed)
+- ✅ FastAPI application structure
+- ✅ React app structure
+- ✅ API client setup
+- ✅ Error handling infrastructure
+
+**Last Updated**: 2024-12-19
+```
+
+**Step 3: Update DEVELOPMENT.md**
+```markdown
+**Current Phase**: Phase 2 Complete, ready for Phase 3 (User Story 1)
+```
+
+**Step 4: Commit**
+```bash
+git add plan.md
+git add .cursor/DEVELOPMENT.md
+git commit -m "docs: mark Phase 2 (Foundational) as complete"
+```
+
+## Quick Reference Card
+
+**Before every commit, ask:**
+
+1. Did I add/modify an endpoint? → Update contracts/api.yaml
+2. Did I complete a phase step? → Update plan.md Implementation Status
+3. Did I change models? → Update data-model.md
+4. Did I add a package/service? → Update plan.md Project Structure
+5. Did I change configuration? → Update plan.md Technical Context
+
+**If answer is YES to any** → Update spec.md/plan.md and include in commit
+
+---
+
+**Remember**: spec.md and plan.md are sources of truth. Keep them current!

@@ -1,0 +1,193 @@
+# SDD Process Rules
+
+Mandatory workflow steps that enforce Spec-Driven Development discipline.
+
+---
+
+## NEVER
+
+- **Proceed to next task** without completing all 7 steps below
+- **Commit without tests passing**: All tests must pass first
+- **Commit without reflections checked**: Check dependency-reflection.mdc
+- **Commit without spec.md/plan.md synced**: Update if spec-sync-check triggers
+- **Skip git commits**: Every task = commit (no accumulated changes)
+- **Update DEVELOPMENT.md** without running spec-sync-check first
+- **Leave task.md stale**: Must reflect actual progress
+- **Abandon work mid-step**: Mark as BLOCKED, document blocker
+
+---
+
+## ALWAYS - The 7-Step Workflow
+
+After every task completion, follow **ALL** steps in order:
+
+### Step 1: Verify Tests Pass
+
+```bash
+# Backend
+cd backend && pytest
+
+# Frontend
+cd frontend && npm test
+```
+
+**Requirement**: All tests passing, no failures or skips
+
+### Step 2: Check Dependency Reflections (REFLECT)
+
+**Ask yourself**:
+- Did I modify data models? → Check services, API handlers, data-model.md, tests
+- Did I add/modify endpoints? → Check contracts/api.yaml, E2E tests
+- Did I change interfaces? → Check all implementations using them
+- Did I complete a phase step? → Check plan.md status, task.md
+
+**See**: `.cursor/rules/dependency-reflection.mdc` for detailed guidance
+
+**Actions**:
+- [ ] Check documentation drift (spec.md, plan.md, data-model.md)
+- [ ] Verify test coverage
+- [ ] Ensure all cross-file changes are propagated
+- [ ] Run regression tests if high-priority changes
+
+### Step 3: Update spec.md/plan.md if Triggered (SYNC)
+
+**See**: `.cursor/rules/spec-sync-check.mdc` for detailed guidance
+
+**Update spec.md/plan.md if ANY**:
+- [ ] Completed a phase step (update plan.md Implementation Status)
+- [ ] Added new endpoint (update contracts/api.yaml)
+- [ ] Added new service/package (update plan.md Project Structure)
+- [ ] Modified API response format (update data-model.md)
+- [ ] Changed configuration (update plan.md Technical Context)
+
+**Process**:
+1. Open `specs/002-prd-reviewer/spec.md` or `plan.md`
+2. Update relevant sections
+3. Update "Last Updated" date
+4. Verify accuracy
+
+**Include spec.md/plan.md in commit** if updated
+
+### Step 4: Stage Changes
+
+```bash
+git add <files-related-to-task>
+# If spec.md/plan.md updated:
+git add specs/002-prd-reviewer/spec.md
+git add specs/002-prd-reviewer/plan.md
+```
+
+**Staging rules**:
+- Only task-related files
+- Include spec.md/plan.md if updated
+- Exclude unrelated changes
+- Verify with `git status` first
+
+### Step 5: Commit with Descriptive Message
+
+```bash
+git commit -m "$(cat <<'EOF'
+feat(backend|frontend): complete TASK## - Task Name
+
+Brief description of what was accomplished.
+
+## Changes
+- Key change 1
+- Key change 2
+- Key change 3
+
+Files changed: N
+Tests: All passing
+Time: Xh actual / Yh estimated
+
+🤖 Generated with Cursor
+EOF
+)"
+```
+
+**Commit guidelines**:
+- Descriptive subject line (feat, fix, docs, test, refactor)
+- Include what and why
+- List key changes
+- Track time spent vs estimated
+
+### Step 6: Update Progress Tracking
+
+**Update .work-items/002-prd-reviewer/task.md**:
+```markdown
+### TASK##: Task Name (Date)
+
+**Status**: COMPLETE
+**Time**: Xh actual / Yh estimated
+
+**Completed**:
+- Deliverable 1
+- Deliverable 2
+
+**Changes**:
+- Modified: file.py
+- Added: file_test.py
+
+**Commit**: {hash}
+```
+
+**Update .cursor/DEVELOPMENT.md**:
+- Current status section
+- Recently completed work (last 1-2 items)
+- Next steps
+
+### Step 7: Only Then Proceed to Next Task
+
+- Verify commit succeeded
+- Review git log for correct message
+- Check task.md reflects completion
+- Acknowledge readiness for next task
+
+---
+
+## Why This Matters
+
+Without enforcement:
+- Work gets lost (no commits)
+- Dependencies break (no reflections)
+- Specs diverge from reality (no spec.md/plan.md sync)
+- Progress is unclear (no task.md updates)
+- Collaboration becomes impossible
+
+**Enhanced SDD Flow**:
+```
+Spec → Tests → Code → Tests Pass → REFLECT → SYNC → COMMIT → Next Task
+                                      ^^^^    ^^^^    ^^^^^^
+                                   Check    Update   Include
+                                  deps   spec.md   all docs
+```
+
+---
+
+## Red Flags
+
+If you catch yourself saying **WITHOUT completing all 7 steps**:
+- "Now let's move to TASK##..."
+- "Ready for the next task?"
+- "TASK## complete! Would you like to continue..."
+
+**STOP and complete the workflow first!**
+
+---
+
+## Correct Pattern
+
+1. "TASK## complete. Let me check reflections and spec.md sync..."
+2. [Run dependency-reflection and spec-sync-check]
+3. [Update spec.md/plan.md if triggered]
+4. [Stage, commit with proper message, update docs]
+5. "TASK## committed. Ready to start next task?"
+
+---
+
+## See Also
+
+- Detailed checklist: `.cursor/rules/sdd-checklist.mdc`
+- Dependency reflection: `.cursor/rules/dependency-reflection.mdc`
+- Spec sync check: `.cursor/rules/spec-sync-check.mdc`
+- TDD workflow: See Step 1 (tests first)

@@ -1,30 +1,142 @@
 # PRD-corrector Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-01-27
+Auto-generated from all feature plans. Last updated: 2024-12-19
 
 ## Active Technologies
 
-- (001-initial-plan)
+- Frontend: React 18+ with TypeScript
+- Backend: Python 3.11+ with FastAPI
+- LLM: OpenAI GPT-4 API
+- Testing: pytest (backend), Vitest (frontend)
 
 ## Project Structure
 
 ```text
 backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   ├── api/
+│   └── utils/
+└── tests/
+
 frontend/
-tests/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── services/
+│   └── utils/
+└── tests/
+
+specs/
+└── 002-prd-reviewer/
+    ├── spec.md
+    ├── plan.md
+    ├── research.md
+    ├── data-model.md
+    ├── contracts/
+    └── tasks.md
+
+.work-items/
+└── 002-prd-reviewer/
+    ├── user-story.md
+    ├── design.md
+    └── task.md
 ```
+
+## Spec-Driven Development (SDD) Workflow
+
+This project follows Spec-Driven Development methodology. **ALWAYS** follow the 7-step workflow after every task completion.
+
+### Session Start Checklist
+
+Before starting any work session:
+
+1. ✅ Read `.cursor/DEVELOPMENT.md` for current session state
+2. ✅ Check `.work-items/002-prd-reviewer/task.md` for current task status
+3. ✅ Review `specs/002-prd-reviewer/plan.md` for technical context
+4. ✅ Identify next task from `specs/002-prd-reviewer/tasks.md`
+
+### SDD Workflow: SPEC → TEST → CODE → REFLECT → SYNC → COMMIT → NEXT
+
+**After every task completion, follow ALL 7 steps:**
+
+1. ✅ **Verify Tests Pass** - Run pytest (backend) and npm test (frontend)
+2. ✅ **Check Dependency Reflections** - See `.cursor/rules/dependency-reflection.mdc`
+3. ✅ **Update spec.md/plan.md if Triggered** - See `.cursor/rules/spec-sync-check.mdc`
+4. ✅ **Stage Changes** - Code + spec.md/plan.md if updated
+5. ✅ **Commit with Descriptive Message** - Every task = commit
+6. ✅ **Update Progress Tracking** - task.md and DEVELOPMENT.md
+7. ✅ **Only Then Proceed to Next Task**
+
+**Detailed guidance**: See `.cursor/rules/04-sdd-process.mdc` and `.cursor/rules/sdd-checklist.mdc`
+
+**NEVER**:
+- Proceed to next task without completing all 7 steps
+- Commit without tests passing
+- Skip git commits (every task = commit)
+- Leave task.md or DEVELOPMENT.md stale
+
+## Test-Driven Development (TDD)
+
+**RED → GREEN → REFACTOR** cycle:
+
+1. **RED**: Write failing tests first
+2. **GREEN**: Implement minimal code to pass tests
+3. **REFACTOR**: Clean up while tests pass
+
+**Test Organization**:
+- `backend/tests/unit/` - Unit tests for models, services, utilities
+- `backend/tests/integration/` - Integration tests for API endpoints
+- `backend/tests/contract/` - Contract tests validating API contracts
+- `frontend/tests/unit/` - Component unit tests
+- `frontend/tests/integration/` - Integration tests for user flows
+
+## Documentation Hierarchy
+
+Priority order (source of truth):
+
+1. `specs/002-prd-reviewer/spec.md` - Feature specification
+2. `specs/002-prd-reviewer/plan.md` - Implementation plan
+3. `.work-items/002-prd-reviewer/` - Active work tracking
+4. `.cursor/DEVELOPMENT.md` - Session context
+
+**Keep documentation synchronized**: Update spec.md/plan.md when code changes (see spec-sync-check.mdc)
 
 ## Commands
 
-# Add commands for 
+Use `.specify` framework commands:
+- `/speckit.specify` - Create feature specification
+- `/speckit.plan` - Generate implementation plan
+- `/speckit.tasks` - Generate task breakdown
 
 ## Code Style
 
-: Follow standard conventions
+### Backend (Python)
+- Follow PEP 8
+- Use type hints
+- Format with black, isort
+- Lint with flake8
+
+### Frontend (TypeScript/React)
+- Use TypeScript strict mode
+- Follow React best practices
+- Format with Prettier
+- Lint with ESLint
 
 ## Recent Changes
 
-- 001-initial-plan: Added
+- 2024-12-19: Completed planning phase (spec, plan, research, data model, contracts, tasks)
+- 2024-12-19: Set up SDD workflow infrastructure (rules, checklists, work items)
+
+## References
+
+- SDD Process Rules: `.cursor/rules/04-sdd-process.mdc`
+- SDD Checklist: `.cursor/rules/sdd-checklist.mdc`
+- Dependency Reflection: `.cursor/rules/dependency-reflection.mdc`
+- Spec Sync Check: `.cursor/rules/spec-sync-check.mdc`
+- Development Context: `.cursor/DEVELOPMENT.md`
+- Work Items: `.work-items/002-prd-reviewer/`
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

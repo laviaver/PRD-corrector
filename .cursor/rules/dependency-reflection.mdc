@@ -1,0 +1,266 @@
+# Dependency Reflection Check
+
+**Purpose**: Detect when changes in one file require updates to related files (reflections).
+
+## When to Use
+
+Run this check after ANY of:
+- Completing a task that modifies multiple files
+- Refactoring existing code
+- Adding new models, services, or API endpoints
+- Modifying data models or interfaces
+- Making changes to storage, services, or API handlers
+
+## What Are "Dependency Reflections"?
+
+**Dependency reflections** are changes that ripple from a primary file to related files:
+
+```
+Primary Change: Add field to PRD model
+       │
+       ├──► Service must handle new field
+       ├──► data-model.md must document new field
+       ├──► Tests must validate new field
+       └──► API handlers may need to transform field
+```
+
+## Reflection Type Taxonomy
+
+```
+              Primary Change
+                    │
+    ┌───────────────┼───────────────┐
+    │               │               │
+Documentation   Code Sync       Test Sync
+Reflections     Reflections     Reflections
+```
+
+### 1. Documentation Reflections
+
+Changes that require documentation updates:
+
+| Primary File | Required Doc Updates |
+|-------------|---------------------|
+| `backend/src/models/*.py` | data-model.md → Entity fields, validation rules |
+| `backend/src/api/**/*.py` | contracts/api.yaml → Endpoints, request/response schemas |
+| `backend/src/services/*.py` | plan.md → Project Structure, spec.md → Functional Requirements |
+| `frontend/src/**/*.tsx` | spec.md → UI/UX Requirements |
+| `.work-items/**/task.md` | DEVELOPMENT.md → Current work status |
+| Phase completion | plan.md → Implementation Status |
+
+### 2. Code Synchronization Reflections
+
+Changes that require updates to related code files:
+
+| Primary File | Required Code Updates |
+|-------------|----------------------|
+| `backend/src/models/*.py` | Services that use these models |
+| `backend/src/services/*.py` (interface) | All API handlers using service methods |
+| `backend/src/api/**/*.py` | Services that provide data to handlers |
+| `frontend/src/services/*.ts` | Components that use these services |
+| `frontend/src/components/*.tsx` | Pages that use these components |
+
+### 3. Test Synchronization Reflections
+
+Changes that require new or updated tests:
+
+| Primary File | Required Test Updates |
+|-------------|---------------------|
+| `backend/src/models/*.py` | Model validation tests, serialization tests |
+| `backend/src/api/**/*.py` | Handler unit tests, contract tests, E2E tests |
+| `backend/src/services/*.py` | Service unit tests, integration tests |
+| `frontend/src/components/*.tsx` | Component unit tests, integration tests |
+| `frontend/src/services/*.ts` | Service unit tests, API mock tests |
+
+## Reflection Detection Matrix
+
+Use this matrix to detect reflections:
+
+| Files Changed | Check These Files | Reflection Type |
+|--------------|-------------------|-----------------|
+| **Models** (`backend/src/models/*.py`) | | |
+| → Add/modify field | Services using this model | Code Sync |
+| → Add/modify field | API handlers returning this model | Code Sync |
+| → Add/modify field | data-model.md schema section | Documentation |
+| → Add/modify field | Model tests | Test Sync |
+| **API Handlers** (`backend/src/api/**/*.py`) | | |
+| → Add new endpoint | contracts/api.yaml endpoints | Documentation |
+| → Add new endpoint | E2E tests, contract tests | Test Sync |
+| → Modify handler logic | Handler unit tests | Test Sync |
+| → Change response format | data-model.md examples | Documentation |
+| **Services** (`backend/src/services/*.py`) | | |
+| → Add new service | plan.md Project Structure | Documentation |
+| → Add new service | Service unit tests | Test Sync |
+| → Modify service logic | Integration tests | Test Sync |
+| **Frontend Components** (`frontend/src/components/*.tsx`) | | |
+| → Add new component | Pages using component | Code Sync |
+| → Modify component props | Component tests | Test Sync |
+| → Add new feature | spec.md UI/UX Requirements | Documentation |
+| **Frontend Services** (`frontend/src/services/*.ts`) | | |
+| → Modify API client | Components using service | Code Sync |
+| → Add new method | Service tests | Test Sync |
+| **Work Items** (`.work-items/**/task.md`) | | |
+| → Complete step | DEVELOPMENT.md current work | Documentation |
+| → Complete phase | plan.md implementation status | Documentation |
+
+## Reflection Checklist
+
+After modifying files, verify:
+
+### Documentation Sync
+- [ ] spec.md reflects new/changed features
+- [ ] plan.md reflects new/changed structure
+- [ ] data-model.md reflects new/changed models (entity fields)
+- [ ] contracts/api.yaml reflects new/changed endpoints
+- [ ] DEVELOPMENT.md reflects current work state
+- [ ] task.md reflects step completion status
+
+### Code Sync
+- [ ] Services handle new/modified model fields
+- [ ] API handlers use correct service methods
+- [ ] Models have all required validation
+- [ ] Frontend components use correct service methods
+- [ ] Frontend services match backend API contracts
+
+### Test Sync
+- [ ] New code paths have test coverage
+- [ ] Modified behavior has updated assertions
+- [ ] E2E tests cover new endpoints
+- [ ] Edge cases are tested
+- [ ] Frontend components have unit tests
+
+## Regression Test Protocol
+
+After identifying reflections, run appropriate regression tests:
+
+### After Backend Changes
+```bash
+cd backend
+pytest
+pytest --cov=src --cov-report=html
+```
+
+### After Frontend Changes
+```bash
+cd frontend
+npm test
+npm run test:coverage
+```
+
+### After API Changes
+```bash
+cd backend
+pytest tests/contract/
+pytest tests/integration/
+```
+
+### After Major Refactor
+```bash
+# Backend
+cd backend && pytest -v
+
+# Frontend
+cd frontend && npm test -- --watchAll=false
+```
+
+## Integration with SDD Workflow
+
+This check happens at **Step 2: REFLECT** in the enhanced SDD cycle:
+
+```
+3. CODE     → Minimal implementation (GREEN)
+4. REFACTOR → Clean up while tests pass
+5. REFLECT  → Check dependency reflections ← YOU ARE HERE
+6. SYNC     → Update spec.md/plan.md if triggered
+7. COMMIT   → Commit code + docs together
+```
+
+## Example Scenarios
+
+### Scenario 1: Added New Field to PRD Model
+
+**Primary Change**: Added `metadata` field to `backend/src/models/prd.py`
+
+**Detected Reflections**:
+1. **Code Sync**:
+   - `backend/src/services/prd_service.py` must handle `metadata`
+   - `backend/src/api/routes/analyze.py` must accept `metadata` in requests
+2. **Documentation**:
+   - `specs/002-prd-reviewer/data-model.md`: Update PRD entity fields
+3. **Test Sync**:
+   - `backend/tests/unit/test_prd.py`: Add test for `metadata` validation
+   - `backend/tests/integration/test_prd_service.py`: Verify `metadata` handling
+
+**Actions**:
+1. Update services to handle `metadata`
+2. Update data-model.md PRD entity
+3. Add/update tests
+4. Run `pytest` to verify
+5. Commit all changes together
+
+### Scenario 2: Added New Endpoint `/api/analysis/{id}/status`
+
+**Primary Change**: Created `backend/src/api/routes/analysis.py` handler
+
+**Detected Reflections**:
+1. **Code Sync**:
+   - `backend/src/services/analysis_service.py` must provide status method
+   - `frontend/src/services/analysisService.ts` must call new endpoint
+2. **Documentation**:
+   - `specs/002-prd-reviewer/contracts/api.yaml`: Add endpoint definition
+3. **Test Sync**:
+   - `backend/tests/unit/test_analysis_api.py`: Add handler test
+   - `backend/tests/contract/test_analysis_api.py`: Add contract test
+   - `frontend/tests/unit/analysisService.test.ts`: Add service test
+
+**Actions**:
+1. Implement service method
+2. Update contracts/api.yaml
+3. Update frontend service
+4. Write tests
+5. Run all tests
+6. Commit all changes together
+
+### Scenario 3: Completed Phase 2 (Foundational)
+
+**Primary Change**: Completed all foundational tasks
+
+**Detected Reflections**:
+1. **Documentation**:
+   - `specs/002-prd-reviewer/plan.md`: Update Phase 2 status to "COMPLETE ✅"
+   - `.work-items/002-prd-reviewer/task.md`: Mark all Phase 2 tasks as COMPLETE
+   - `.cursor/DEVELOPMENT.md`: Update current status
+2. **Test Sync**:
+   - Verify all foundational tests pass
+
+**Actions**:
+1. Update plan.md Implementation Status
+2. Update task.md progress tracker
+3. Update DEVELOPMENT.md
+4. Run full regression: `pytest` and `npm test`
+5. Commit all documentation updates together
+
+## Quick Reference Card
+
+**After making changes, ask yourself:**
+
+### Did I modify models?
+→ Check: Services, API handlers, data-model.md, Tests
+
+### Did I add/modify endpoints?
+→ Check: contracts/api.yaml, E2E tests, Frontend services
+
+### Did I change service interfaces?
+→ Check: All API handlers using services, Tests
+
+### Did I complete a phase step?
+→ Check: plan.md status, task.md, DEVELOPMENT.md
+
+### Did I refactor code?
+→ Check: All tests still pass, Docs still accurate
+
+**If answer is YES** → Run reflection check before committing!
+
+---
+
+**Remember**: Code changes rarely happen in isolation. Check reflections before every commit!
