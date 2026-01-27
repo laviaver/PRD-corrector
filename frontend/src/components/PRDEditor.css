@@ -1,0 +1,76 @@
+.prd-editor {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  background-color: #f8f9fa;
+}
+
+.editor-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.unsaved-indicator {
+  font-size: 0.85rem;
+  color: #ffc107;
+  font-style: italic;
+}
+
+.btn-save {
+  padding: 0.5rem 1rem;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-save:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.btn-save:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.editor-textarea {
+  flex: 1;
+  padding: 1rem;
+  border: none;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+}
+
+.editor-footer {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid #ddd;
+  background-color: #f8f9fa;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.char-count {
+  font-weight: 600;
+}
