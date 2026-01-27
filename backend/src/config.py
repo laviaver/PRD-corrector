@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     PORT: int = 8000
     DEBUG: bool = False
 
-    # CORS Configuration
+    # CORS Configuration (can be comma-separated string or list)
     CORS_ORIGINS: List[str] = [
         "http://localhost:5173",
         "http://localhost:3000",
@@ -41,9 +41,16 @@ class Settings(BaseSettings):
         super().__init__(**kwargs)
         # If CORS_ORIGINS is a string (from env), split it
         if isinstance(self.CORS_ORIGINS, str):
-            self.CORS_ORIGINS = [
-                origin.strip() for origin in self.CORS_ORIGINS.split(",")
-            ]
+            # Handle empty string
+            if not self.CORS_ORIGINS.strip():
+                self.CORS_ORIGINS = [
+                    "http://localhost:5173",
+                    "http://localhost:3000",
+                ]
+            else:
+                self.CORS_ORIGINS = [
+                    origin.strip() for origin in self.CORS_ORIGINS.split(",")
+                ]
 
 
 # Global settings instance

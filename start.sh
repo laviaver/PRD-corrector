@@ -24,10 +24,15 @@ echo ""
 # Check if .env exists for backend
 if [ ! -f "backend/.env" ]; then
     echo -e "${YELLOW}⚠️  Warning: backend/.env not found${NC}"
-    echo -e "${YELLOW}   Creating .env.example...${NC}"
     if [ -f "backend/.env.example" ]; then
+        echo -e "${YELLOW}   Creating .env from .env.example...${NC}"
         cp backend/.env.example backend/.env
         echo -e "${YELLOW}   Please edit backend/.env and add your OPENAI_API_KEY${NC}"
+    else
+        echo -e "${YELLOW}   Creating .env file...${NC}"
+        echo "OPENAI_API_KEY=" > backend/.env
+        echo -e "${YELLOW}   Please edit backend/.env and add your OPENAI_API_KEY${NC}"
+        echo -e "${YELLOW}   Note: Backend will start but analysis won't work without API key${NC}"
     fi
 fi
 
@@ -42,6 +47,13 @@ cleanup() {
 
 # Trap Ctrl+C
 trap cleanup SIGINT SIGTERM
+
+# Kill any existing backend on port 8000
+if lsof -ti :8000 > /dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️  Port 8000 is in use. Killing existing process...${NC}"
+    lsof -ti :8000 | xargs kill -9 2>/dev/null || true
+    sleep 1
+fi
 
 # Start Backend
 echo -e "${GREEN}Starting Backend Server...${NC}"
@@ -66,12 +78,19 @@ BACKEND_PID=$!
 cd ..
 
 # Wait a moment for backend to start
-sleep 2
+sleep 3
 
 # Check if backend started successfully
 if ! kill -0 $BACKEND_PID 2>/dev/null; then
-    echo -e "${RED}❌ Backend failed to start. Check backend.log${NC}"
+    echo -e "${RED}❌ Backend failed to start. Check backend.log:${NC}"
+    tail -20 backend.log 2>/dev/null || echo "No backend.log found"
     exit 1
+fi
+
+# Verify backend is responding
+if ! curl -s http://localhost:8000/health > /dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️  Backend started but not responding yet. Waiting...${NC}"
+    sleep 2
 fi
 
 echo -e "${GREEN}✅ Backend running on http://localhost:8000${NC}"
