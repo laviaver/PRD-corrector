@@ -41,11 +41,16 @@ class AnalyzerService:
         analysis = storage.create_analysis(analysis)
 
         try:
+            logger.info(f"Starting LLM analysis for PRD: {prd.id}, content length: {len(prd.content)}")
+            
             # Get LLM analysis (prompt is now handled inside llm_service)
             llm_response = llm_service.analyze_prd(prd.content, PRD_ANALYSIS_SYSTEM_PROMPT)
+            
+            logger.info(f"LLM response received, length: {len(llm_response) if llm_response else 0}")
 
             # Parse LLM response into suggestions
             suggestions = self._parse_llm_response(llm_response, analysis.id)
+            logger.info(f"Parsed {len(suggestions)} suggestions from LLM response")
             
             # If no suggestions found, log and create helpful default
             if not suggestions:
