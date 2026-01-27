@@ -4,7 +4,8 @@
  * This module centralizes all API endpoint URLs and configuration.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Use relative paths to leverage Vite proxy, or full URL if VITE_API_URL is set
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const API_ENDPOINTS = {
   // Health check

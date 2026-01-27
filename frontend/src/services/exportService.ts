@@ -27,9 +27,6 @@ export async function exportAnalysis(
   formData.append('analysis_id', analysisId);
   formData.append('format', format);
 
-  return post<ExportResponse>(API_ENDPOINTS.EXPORT, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  // Don't set Content-Type header - let browser set it with boundary
+  return post<ExportResponse>(API_ENDPOINTS.EXPORT, formData);
 }

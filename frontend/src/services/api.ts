@@ -12,11 +12,9 @@ import { API_ENDPOINTS, API_CONFIG } from '../constants/api';
  * Create configured Axios instance.
  */
 const apiClient: AxiosInstance = axios.create({
-  baseURL: '', // Don't set baseURL since endpoints already include full URLs
+  baseURL: '', // Use relative paths to leverage Vite proxy
   timeout: API_CONFIG.TIMEOUT,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // Don't set default Content-Type - will be set per request
 });
 
 /**
@@ -24,6 +22,11 @@ const apiClient: AxiosInstance = axios.create({
  */
 apiClient.interceptors.request.use(
   (config) => {
+    // Remove Content-Type header for FormData - browser will set it with boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    
     // Add any auth tokens here in the future
     // const token = getAuthToken();
     // if (token) {
@@ -78,8 +81,8 @@ apiClient.interceptors.response.use(
  * Generic GET request helper.
  */
 export async function get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
-  // Use full URL if it starts with http, otherwise use baseURL
-  const fullUrl = url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url}`;
+  // Use full URL if it starts with http, otherwise use relative path (Vite proxy)
+  const fullUrl = url.startsWith('http') ? url : url;
   const response = await apiClient.get<T>(fullUrl, config);
   return response.data;
 }
@@ -92,9 +95,19 @@ export async function post<T>(
   data?: unknown,
   config?: AxiosRequestConfig
 ): Promise<T> {
-  // Use full URL if it starts with http, otherwise use baseURL
-  const fullUrl = url.startsWith('http') ? url : `${API_CONFIG.BASE_URL}${url}`;
-  const response = await apiClient.post<T>(fullUrl, data, config);
+  // Merge config to ensure FormData handling
+  const mergedConfig: AxiosRequestConfig = {
+    ...config,
+    // Remove Content-Type if FormData - let browser set it
+    headers: {
+      ...config?.headers,
+      ...(data instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
+    },
+  };
+  
+  // Use full URL if it starts with http, otherwise use relative path (Vite proxy)
+  const fullUrl = url.startsWith('http') ? url : url;
+  const response = await apiClient.post<T>(fullUrl, data, mergedConfig);
   return response.data;
 }
 

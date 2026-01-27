@@ -51,6 +51,7 @@ export interface AnalysisResult {
  * Get analysis status.
  */
 export async function getAnalysisStatus(analysisId: string): Promise<AnalysisStatus> {
+  // Use relative path for Vite proxy
   return get<AnalysisStatus>(API_ENDPOINTS.ANALYSIS_STATUS(analysisId));
 }
 
@@ -58,5 +59,6 @@ export async function getAnalysisStatus(analysisId: string): Promise<AnalysisSta
  * Get analysis results with suggestions.
  */
 export async function getAnalysis(analysisId: string): Promise<AnalysisResult> {
+  // Use relative path for Vite proxy
   return get<AnalysisResult>(API_ENDPOINTS.ANALYSIS(analysisId));
 }
