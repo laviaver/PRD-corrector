@@ -2,22 +2,33 @@
 PRD analyzer service.
 
 This service orchestrates PRD analysis using LLM and generates structured suggestions.
+Supports parallel section analysis (suggestion 5) for faster results on long PRDs.
 """
 
 import json
 import re
-from typing import List
-from uuid import UUID
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List, Tuple
 
 from src.models.analysis import Analysis, AnalysisStatus
 from src.models.prd import PRD
 from src.models.suggestion import Suggestion, SuggestionCategory, SuggestionPriority
 from src.services.llm_service import llm_service
-from src.services.prompts import PRD_ANALYSIS_SYSTEM_PROMPT, PRD_ANALYSIS_USER_PROMPT_TEMPLATE
+from src.services.prompts import (
+    PRD_ANALYSIS_SYSTEM_PROMPT,
+    PRD_ANALYSIS_USER_PROMPT_TEMPLATE,
+    PRD_SECTION_SYSTEM_PROMPT,
+    PRD_SECTION_USER_TEMPLATE,
+)
 from src.services.storage import storage
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Parallel section analysis: max sections to analyze in parallel
+MAX_PARALLEL_SECTIONS = 8
+MIN_SECTION_CHARS = 200
+SECTION_MAX_TOKENS = 800  # per-section output cap
 
 
 class AnalyzerService:
@@ -42,14 +53,18 @@ class AnalyzerService:
 
         try:
             logger.info(f"Starting LLM analysis for PRD: {prd.id}, content length: {len(prd.content)}")
-            
-            # Get LLM analysis (prompt is now handled inside llm_service)
-            llm_response = llm_service.analyze_prd(prd.content, PRD_ANALYSIS_SYSTEM_PROMPT)
-            
-            logger.info(f"LLM response received, length: {len(llm_response) if llm_response else 0}")
 
-            # Parse LLM response into suggestions
-            suggestions = self._parse_llm_response(llm_response, analysis.id)
+            sections = self._split_into_sections(prd.content)
+            if len(sections) < 2:
+                # Single block or no clear sections: one full-doc call
+                llm_response = llm_service.analyze_prd(prd.content, PRD_ANALYSIS_SYSTEM_PROMPT)
+                logger.info(f"LLM response received (full doc), length: {len(llm_response) if llm_response else 0}")
+                suggestions = self._parse_llm_response(llm_response, analysis.id)
+            else:
+                # Parallel section analysis (suggestion 5)
+                suggestions = self._analyze_sections_parallel(
+                    sections, analysis.id, max_workers=min(len(sections), MAX_PARALLEL_SECTIONS)
+                )
             logger.info(f"Parsed {len(suggestions)} suggestions from LLM response")
             
             # If no suggestions found, log and create helpful default
@@ -92,6 +107,73 @@ class AnalyzerService:
             analysis.error_message = str(e)
             storage.update_analysis(analysis)
             raise
+
+    def _split_into_sections(self, content: str) -> List[Tuple[str, str]]:
+        """Split PRD content into (section_name, section_content) by markdown headers."""
+        if not content or not content.strip():
+            return []
+        # Split by lines that look like "# Title" or "## Title"
+        lines = content.strip().splitlines()
+        sections: List[Tuple[str, str]] = []
+        current_name = "Document"
+        current_buf: List[str] = []
+
+        for line in lines:
+            header_match = re.match(r'^(#{1,3})\s+(.+)$', line.strip())
+            if header_match:
+                body = "\n".join(current_buf).strip()
+                if len(body) >= MIN_SECTION_CHARS:
+                    sections.append((current_name, body))
+                current_name = header_match.group(2).strip()
+                current_buf = []
+            else:
+                current_buf.append(line)
+
+        body = "\n".join(current_buf).strip()
+        if len(body) >= MIN_SECTION_CHARS:
+            sections.append((current_name, body))
+        if not sections and content.strip():
+            return [("Document", content.strip())]
+        return sections[:MAX_PARALLEL_SECTIONS]
+
+    def _analyze_sections_parallel(
+        self, sections: List[Tuple[str, str]], analysis_id: UUID, max_workers: int = 4
+    ) -> List[Suggestion]:
+        """Run LLM per section in parallel, merge and dedupe suggestions."""
+
+        def job(section_name: str, section_content: str) -> str:
+            user_prompt = PRD_SECTION_USER_TEMPLATE.format(
+                section_name=section_name,
+                section_content=(section_content[:12000] if len(section_content) > 12000 else section_content),
+            )
+            return llm_service.analyze_with_prompts(
+                PRD_SECTION_SYSTEM_PROMPT,
+                user_prompt,
+                max_tokens=SECTION_MAX_TOKENS,
+            )
+
+        merged: List[Suggestion] = []
+        seen_titles: set[str] = set()
+        max_total = 10  # cap merged suggestions
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(job, name, content): (name, content)
+                for name, content in sections
+            }
+            for future in as_completed(futures):
+                name, _ = futures[future]
+                try:
+                    raw = future.result()
+                    for s in self._parse_llm_response(raw, analysis_id):
+                        norm = (s.title or "").lower().strip()
+                        if norm and norm not in seen_titles and len(merged) < max_total:
+                            seen_titles.add(norm)
+                            merged.append(s)
+                except Exception as e:
+                    logger.warning(f"Section '{name}' analysis failed: {e}")
+
+        return merged
 
     def _parse_llm_response(self, llm_response: str, analysis_id: UUID) -> List[Suggestion]:
         """

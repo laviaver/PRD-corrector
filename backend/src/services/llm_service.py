@@ -105,13 +105,16 @@ class LLMService:
         self.api_key = settings.HUGGINGFACE_API_KEY
         logger.info("Initialized Hugging Face provider")
 
-    def analyze_prd(self, prd_content: str, system_prompt: str) -> str:
+    def analyze_prd(
+        self, prd_content: str, system_prompt: str, max_tokens: int | None = None
+    ) -> str:
         """
         Analyze PRD content using configured LLM provider.
 
         Args:
             prd_content: PRD text content
             system_prompt: System prompt for analysis
+            max_tokens: Optional cap on output tokens (default from settings)
 
         Returns:
             Analysis response from LLM as JSON string
@@ -125,18 +128,41 @@ class LLMService:
         user_prompt = PRD_ANALYSIS_USER_PROMPT_TEMPLATE.format(prd_content=prd_content)
 
         if self.provider == "ollama":
-            return self._analyze_with_ollama(system_prompt, user_prompt)
+            return self._analyze_with_ollama(system_prompt, user_prompt, max_tokens)
         elif self.provider == "groq":
-            return self._analyze_with_groq(system_prompt, user_prompt)
+            return self._analyze_with_groq(system_prompt, user_prompt, max_tokens)
         elif self.provider == "openai":
-            return self._analyze_with_openai(system_prompt, user_prompt)
+            return self._analyze_with_openai(system_prompt, user_prompt, max_tokens)
         elif self.provider == "huggingface":
-            return self._analyze_with_huggingface(system_prompt, user_prompt)
+            return self._analyze_with_huggingface(system_prompt, user_prompt, max_tokens)
         else:
             raise ValueError(f"Unsupported LLM provider: {self.provider}")
 
-    def _analyze_with_ollama(self, system_prompt: str, user_prompt: str) -> str:
+    def analyze_with_prompts(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        max_tokens: int | None = None,
+    ) -> str:
+        """
+        Analyze using given system and user prompts (no template).
+        Used for section analysis where the caller builds the user prompt.
+        """
+        if self.provider == "ollama":
+            return self._analyze_with_ollama(system_prompt, user_prompt, max_tokens)
+        if self.provider == "groq":
+            return self._analyze_with_groq(system_prompt, user_prompt, max_tokens)
+        if self.provider == "openai":
+            return self._analyze_with_openai(system_prompt, user_prompt, max_tokens)
+        if self.provider == "huggingface":
+            return self._analyze_with_huggingface(system_prompt, user_prompt, max_tokens)
+        raise ValueError(f"Unsupported LLM provider: {self.provider}")
+
+    def _analyze_with_ollama(
+        self, system_prompt: str, user_prompt: str, max_tokens: int | None = None
+    ) -> str:
         """Analyze using Ollama (local, free)."""
+        num_predict = max_tokens if max_tokens is not None else getattr(settings, "LLM_MAX_TOKENS", 2000)
         try:
             # Normalize model name (remove :latest suffix if present, Ollama handles it)
             model_name = self.model.split(":")[0] if ":" in self.model else self.model
@@ -163,7 +189,7 @@ class LLMService:
                     "stream": False,
                     "options": {
                         "temperature": 0.3,
-                        "num_predict": 2000,  # Reduced from 4000 for faster response
+                        "num_predict": num_predict,
                     },
                     "format": "json",  # Request JSON format
                 },
@@ -190,17 +216,18 @@ class LLMService:
                 raise Exception("Cannot connect to Ollama. Make sure Ollama is running: 'ollama serve'")
             raise Exception(f"Ollama request failed: {e}")
 
-    def _analyze_with_groq(self, system_prompt: str, user_prompt: str) -> str:
+    def _analyze_with_groq(self, system_prompt: str, user_prompt: str, max_tokens: int | None = None) -> str:
         """Analyze using Groq (free tier, very fast)."""
+        tokens = max_tokens if max_tokens is not None else getattr(settings, "LLM_MAX_TOKENS", 2000)
         try:
             response = self.client.chat.completions.create(
-                model="llama-3.3-70b-versatile",  # Current Groq model (3.1 was decommissioned)
+                model=getattr(settings, "GROQ_MODEL", "llama-3.1-8b-instant"),
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.3,
-                max_tokens=4000,
+                max_tokens=tokens,
                 response_format={"type": "json_object"},
                 timeout=90.0,  # Fail fast if Groq doesn't respond in 90s
             )
@@ -211,8 +238,11 @@ class LLMService:
             logger.error(f"Groq API call failed: {e}", exc_info=True)
             raise
 
-    def _analyze_with_openai(self, system_prompt: str, user_prompt: str) -> str:
+    def _analyze_with_openai(
+        self, system_prompt: str, user_prompt: str, max_tokens: int | None = None
+    ) -> str:
         """Analyze using OpenAI."""
+        tokens = max_tokens if max_tokens is not None else getattr(settings, "LLM_MAX_TOKENS", 2000)
         try:
             # Try with JSON mode first (requires GPT-4-turbo or newer)
             try:
@@ -223,7 +253,7 @@ class LLMService:
                         {"role": "user", "content": user_prompt},
                     ],
                     temperature=0.3,
-                    max_tokens=4000,
+                    max_tokens=tokens,
                     response_format={"type": "json_object"},
                 )
             except Exception as e:
@@ -236,7 +266,7 @@ class LLMService:
                         {"role": "user", "content": user_prompt},
                     ],
                     temperature=0.3,
-                    max_tokens=4000,
+                    max_tokens=tokens,
                 )
             analysis = response.choices[0].message.content
             logger.info(f"OpenAI analysis completed. Response length: {len(analysis) if analysis else 0}")
@@ -245,10 +275,12 @@ class LLMService:
             logger.error(f"OpenAI API call failed: {e}", exc_info=True)
             raise
 
-    def _analyze_with_huggingface(self, system_prompt: str, user_prompt: str) -> str:
+    def _analyze_with_huggingface(
+        self, system_prompt: str, user_prompt: str, max_tokens: int | None = None
+    ) -> str:
         """Analyze using Hugging Face Inference API."""
+        tokens = max_tokens if max_tokens is not None else getattr(settings, "LLM_MAX_TOKENS", 2000)
         # Note: Hugging Face models vary, this is a basic implementation
-        # You may need to adjust based on the specific model
         try:
             headers = {"Authorization": f"Bearer {self.api_key}"}
             # Using a good free model for text generation
@@ -264,7 +296,7 @@ class LLMService:
                     "inputs": full_prompt,
                     "parameters": {
                         "temperature": 0.3,
-                        "max_new_tokens": 4000,
+                        "max_new_tokens": tokens,
                         "return_full_text": False,
                     },
                 },

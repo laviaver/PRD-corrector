@@ -36,3 +36,14 @@ PRD:
 {prd_content}
 
 Check for missing sections, unclear language, incomplete info. Return ONLY JSON array with suggestions."""
+
+# Shorter prompt for per-section parallel analysis (suggestion 5)
+PRD_SECTION_SYSTEM_PROMPT = """You are a PRD reviewer. Analyze this PRD section and return 0-3 improvement suggestions.
+
+CRITICAL: Return ONLY valid JSON: {"suggestions": [{"category":"...","priority":"high|medium|low","title":"...","explanation":"...","location":"Section name"}]}
+Use category: structure|clarity|completeness|best_practices|technical_quality. If no issues, return {"suggestions":[]}."""
+
+PRD_SECTION_USER_TEMPLATE = """Section "{section_name}":
+{section_content}
+
+Return 0-3 suggestions as JSON {"suggestions": [...]}. No other text."""

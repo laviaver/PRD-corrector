@@ -111,6 +111,8 @@ pip install openai  # Already in requirements.txt
 
 That's it! Groq is extremely fast and free.
 
+**Faster analysis:** The app uses `llama-3.1-8b-instant` by default (smaller/faster). Set `GROQ_MODEL=llama-3.3-70b-versatile` for higher quality. Lower `LLM_MAX_TOKENS` (e.g. 2000) speeds up output. PRDs with multiple `#`/`##` sections are analyzed in parallel for better speed.
+
 ---
 
 ## 🔧 Configuration Options
@@ -127,6 +129,10 @@ OLLAMA_MODEL=llama3.2
 
 # Groq settings
 GROQ_API_KEY=your_key_here
+GROQ_MODEL=llama-3.1-8b-instant   # Faster; use llama-3.3-70b-versatile for higher quality
+
+# Analysis speed (all providers)
+LLM_MAX_TOKENS=2000   # Lower = faster output; 2000 is enough for 3–5 suggestions
 
 # OpenAI settings (if you want to use paid OpenAI)
 OPENAI_API_KEY=your_key_here
