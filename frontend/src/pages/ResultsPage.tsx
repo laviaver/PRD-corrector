@@ -108,6 +108,33 @@ export default function ResultsPage() {
         </div>
       ) : (
         <>
+          {analysisData.scores && (
+            <div className="scores-section" data-testid="scores-section">
+              <h2>PRD Scores</h2>
+              <div className="scores-grid">
+                <div className="score-item">
+                  <span className="score-label">Structure</span>
+                  <span className="score-value">{analysisData.scores.structure_score}/100</span>
+                </div>
+                <div className="score-item">
+                  <span className="score-label">Completeness</span>
+                  <span className="score-value">{analysisData.scores.completeness_score}/100</span>
+                </div>
+                <div className="score-item">
+                  <span className="score-label">Total</span>
+                  <span className="score-value score-total">{analysisData.scores.total_score}/100</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {analysisData.incomplete_sections && analysisData.incomplete_sections.length > 0 && (
+            <div className="incomplete-sections" data-testid="incomplete-sections">
+              <strong>Review incomplete for:</strong>{' '}
+              {analysisData.incomplete_sections.join(', ')}
+            </div>
+          )}
+
           {analysisData.summary && (
             <AnalysisSummary
               totalSuggestions={analysisData.summary.total_suggestions}

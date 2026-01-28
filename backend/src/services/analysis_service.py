@@ -75,12 +75,19 @@ class AnalysisService:
         if not analysis:
             return {"status": "not_found"}
 
-        return {
+        out = {
             "status": analysis.status.value,
             "started_at": analysis.started_at.isoformat() if analysis.started_at else None,
             "completed_at": analysis.completed_at.isoformat() if analysis.completed_at else None,
             "error_message": analysis.error_message,
         }
+        if analysis.scores is not None:
+            out["scores"] = analysis.scores.model_dump()
+        if analysis.section_status is not None:
+            out["section_status"] = [e.model_dump() for e in analysis.section_status]
+        if analysis.incomplete_sections is not None:
+            out["incomplete_sections"] = analysis.incomplete_sections
+        return out
 
     def get_suggestions(self, analysis_id: UUID) -> list[Suggestion]:
         """

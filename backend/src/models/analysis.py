@@ -6,7 +6,7 @@ Represents an analysis run on a PRD.
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import List, Literal, Optional
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -21,6 +21,13 @@ class AnalysisStatus(str, Enum):
     FAILED = "failed"
 
 
+class SectionStatusEntry(BaseModel):
+    """Per-section status from Stage 2 (ok, timeout, error)."""
+
+    section_id: str = Field(..., description="Extracted section id")
+    status: Literal["ok", "timeout", "error"] = Field(..., description="Section review status")
+
+
 class AnalysisSummary(BaseModel):
     """Summary statistics for an analysis."""
 
@@ -31,6 +38,14 @@ class AnalysisSummary(BaseModel):
     suggestions_by_priority: dict[str, int] = Field(
         default_factory=dict, description="Count of suggestions per priority level"
     )
+
+
+class AnalysisScores(BaseModel):
+    """Stage 3 deterministic scores from structure + suggestions."""
+
+    structure_score: int = Field(0, ge=0, le=100, description="Presence of problem, goals, metrics, risks")
+    completeness_score: int = Field(0, ge=0, le=100, description="Signals: owner, metrics, KPIs")
+    total_score: int = Field(0, ge=0, le=100, description="Weighted sum")
 
 
 class Analysis(BaseModel):
@@ -47,6 +62,13 @@ class Analysis(BaseModel):
     completed_at: Optional[datetime] = Field(None, description="When analysis completed")
     error_message: Optional[str] = Field(None, description="Error message if status is 'failed'")
     summary: Optional[AnalysisSummary] = Field(None, description="Analysis summary statistics")
+    section_status: Optional[List[SectionStatusEntry]] = Field(
+        None, description="Per-section review status (ok|timeout|error)"
+    )
+    incomplete_sections: Optional[List[str]] = Field(
+        None, description="Section ids that are timeout or error (review incomplete)"
+    )
+    scores: Optional[AnalysisScores] = Field(None, description="Stage 3 deterministic scores")
 
     class Config:
         """Pydantic configuration."""

@@ -125,6 +125,22 @@ paths:
                   error_message:
                     type: string
                     nullable: true
+                  scores:
+                    $ref: '#/components/schemas/AnalysisScores'
+                    nullable: true
+                    description: Stage 3 deterministic scores (when completed)
+                  section_status:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SectionStatusEntry'
+                    nullable: true
+                    description: Per-section review status (ok|timeout|error)
+                  incomplete_sections:
+                    type: array
+                    items:
+                      type: string
+                    nullable: true
+                    description: Section ids with timeout or error (review incomplete)
         '404':
           description: Analysis not found
           content:
@@ -206,6 +222,19 @@ components:
         error_message:
           type: string
           nullable: true
+        scores:
+          $ref: '#/components/schemas/AnalysisScores'
+          nullable: true
+        section_status:
+          type: array
+          items:
+            $ref: '#/components/schemas/SectionStatusEntry'
+          nullable: true
+        incomplete_sections:
+          type: array
+          items:
+            type: string
+          nullable: true
 
     PRDInfo:
       type: object
@@ -243,6 +272,33 @@ components:
           type: object
           additionalProperties:
             type: integer
+
+    AnalysisScores:
+      type: object
+      description: Stage 3 deterministic scores
+      properties:
+        structure_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        completeness_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        total_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    SectionStatusEntry:
+      type: object
+      description: Per-section review status
+      properties:
+        section_id:
+          type: string
+        status:
+          type: string
+          enum: [ok, timeout, error]
 
     Suggestion:
       type: object

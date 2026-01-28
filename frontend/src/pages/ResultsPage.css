@@ -34,6 +34,56 @@
   margin: 2rem 0;
 }
 
+.scores-section {
+  background-color: #e8f4f8;
+  padding: 1.5rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.scores-section h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+}
+
+.scores-grid {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.score-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.score-label {
+  font-weight: 600;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.score-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.score-value.score-total {
+  font-size: 1.5rem;
+  color: #0d6efd;
+}
+
+.incomplete-sections {
+  padding: 0.75rem 1rem;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
 .analysis-summary {
   background-color: #f8f9fa;
   padding: 1.5rem;

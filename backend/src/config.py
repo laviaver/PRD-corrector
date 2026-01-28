@@ -12,22 +12,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    # LLM Provider Configuration
-    LLM_PROVIDER: str = "groq"  # Options: "groq", "ollama", "openai", "huggingface"
-    
-    # OpenAI API Configuration
-    OPENAI_API_KEY: str = ""
-    
-    # Groq API Configuration (free tier available)
+    # Groq (only LLM provider; uses OpenAI-compatible API)
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "llama-3.1-8b-instant"  # Faster; use llama-3.3-70b-versatile for quality
-    
-    # Hugging Face API Configuration
-    HUGGINGFACE_API_KEY: str = ""
-    
-    # Ollama Configuration (local, no API key needed)
-    OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "llama3.2"  # Options: llama3.2, mistral, qwen, etc.
 
     # Server Configuration
     HOST: str = "0.0.0.0"
@@ -40,8 +27,11 @@ class Settings(BaseSettings):
     # LLM output cap (suggestions 1 & 4: lower = faster)
     LLM_MAX_TOKENS: int = 2000
 
-    # Optional: Anthropic API (alternative to OpenAI)
-    ANTHROPIC_API_KEY: str = ""
+    # LLM timeout: max seconds for any LLM API call
+    LLM_TIMEOUT_SEC: int = 45
+
+    # Stage 1 structure extraction: max chars per section before sub-chunking
+    MAX_SECTION_CHARS: int = 4000
 
     model_config = SettingsConfigDict(
         env_file=".env",

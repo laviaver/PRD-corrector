@@ -2,15 +2,21 @@
 Analyze endpoint for PRD upload and text paste.
 
 This endpoint handles file uploads and text paste, creates PRD, and initiates analysis.
+Supports streaming (SSE) via POST /api/analyze/stream.
 """
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
-from fastapi.responses import JSONResponse
+import asyncio
+import json
+from queue import Empty, Queue
+
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ValidationError as PydanticValidationError
 
 from src.config import settings
 from src.services.prd_service import prd_service
 from src.services.analysis_service import analysis_service
+from src.services.analyzer import analyzer_service
 from src.services.validation import ValidationError
 from src.utils.file_parser import FileParseError
 from src.utils.logger import get_logger
@@ -18,6 +24,11 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 router = APIRouter()
+
+
+def _sse_message(event: str, data: dict) -> str:
+    """Format one SSE message (event + data)."""
+    return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
 class TextInputRequest(BaseModel):
@@ -128,3 +139,77 @@ async def analyze_prd(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=detail,
         )
+
+
+def _run_analysis_with_queue(prd, queue: Queue, deep: bool = False) -> None:
+    """Run analyzer in thread; push progress events to queue. deep=True = slow path (multi-LLM)."""
+    def callback(event_type: str, data: dict) -> None:
+        queue.put({"event": event_type, "data": data})
+
+    try:
+        analyzer_service.analyze_prd(prd, progress_callback=callback, deep=deep)
+    except Exception as e:
+        logger.error(f"Stream analysis failed: {e}", exc_info=True)
+        queue.put({"event": "error", "data": {"message": str(e)}})
+
+
+@router.post("/analyze/stream")
+async def analyze_prd_stream(
+    file: UploadFile | None = File(None, description="PRD file to upload"),
+    text: str | None = Form(None, description="PRD text content to paste"),
+    deep: bool = Query(False, description="Slow path: per-section analysis (multiple LLM calls)"),
+):
+    """
+    Upload PRD and run analysis; stream progress as Server-Sent Events.
+
+    Default: 1 LLM call (fast). deep=true: slow path with per-section calls.
+    """
+    if file and text:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide either file upload or text content, not both",
+        )
+    if not file and not text:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provide either file upload or text content",
+        )
+
+    try:
+        if file:
+            file_content = await file.read()
+            prd = prd_service.create_prd_from_file(file_content, file.filename or "uploaded_file")
+        else:
+            prd = prd_service.create_prd_from_text(text)
+    except (ValidationError, FileParseError, ValueError, PydanticValidationError) as e:
+        msg = getattr(e, "message", str(e))
+        if hasattr(e, "errors") and e.errors():
+            msg = e.errors()[0].get("msg", msg)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=msg) from e
+
+    event_queue: Queue = Queue()
+
+    async def event_generator():
+        loop = asyncio.get_event_loop()
+        task = loop.run_in_executor(None, _run_analysis_with_queue, prd, event_queue, deep)
+        while True:
+            try:
+                item = event_queue.get_nowait()
+            except Empty:
+                await asyncio.sleep(0.05)
+                continue
+            ev = item.get("event", "")
+            data = item.get("data") or {}
+            yield _sse_message(ev, data)
+            if ev in ("complete", "error"):
+                break
+        try:
+            await task  # ensure executor task finishes
+        except Exception:
+            pass  # already sent error event if any
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
+    )

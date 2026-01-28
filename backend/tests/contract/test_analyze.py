@@ -2,15 +2,16 @@
 Contract tests for POST /api/analyze endpoint.
 
 Tests API contract compliance, request/response formats, and error handling.
-
-Uses LLM_PROVIDER=ollama so the app starts without needing Groq/OpenAI clients
-(it only checks request/response shape; analysis runs in background).
+App uses Groq only; set GROQ_API_KEY so LLMService init succeeds. Tests assert
+201 and response shape; background analysis may fail with dummy key (tests
+do not wait for completion).
 """
 
 import os
 
-# Force ollama for contract tests so app boots without Groq/OpenAI client
-os.environ["LLM_PROVIDER"] = "ollama"
+# Ensure GROQ_API_KEY is set so app starts (dummy ok; contract tests don't call Groq)
+if not os.environ.get("GROQ_API_KEY"):
+    os.environ["GROQ_API_KEY"] = "test-key-contract-tests"
 
 import pytest
 from fastapi.testclient import TestClient

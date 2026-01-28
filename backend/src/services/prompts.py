@@ -4,31 +4,28 @@ Prompt engineering for PRD analysis.
 This module contains system prompts and prompt templates for LLM analysis.
 """
 
-PRD_ANALYSIS_SYSTEM_PROMPT = """You are a PRD reviewer. Analyze the PRD and provide 3-5 specific improvement suggestions.
+PRD_ANALYSIS_SYSTEM_PROMPT = """You are a PRD reviewer.
 
-CRITICAL: Return ONLY valid JSON array, no other text.
+Review the PRD and return 3–5 concrete improvement suggestions.
 
-REQUIRED JSON FORMAT:
+Return ONLY a valid JSON array. No extra text.
+
+Format:
 [
   {
     "category": "structure|clarity|completeness|best_practices|technical_quality",
     "priority": "high|medium|low",
-    "title": "Brief issue summary",
+    "title": "Short issue summary",
     "explanation": "What's wrong and why",
-    "location": "Section name (optional)",
-    "example": "How to fix (optional)",
+    "location": "Section (optional)",
+    "example": "Fix example (optional)",
     "template": "Template snippet (optional)"
   }
 ]
 
-CHECK FOR:
-- Missing sections (Overview, Goals, User Stories, Technical Requirements, Timeline, Metrics)
-- Unclear language or ambiguous requirements
-- Poor structure or organization
-- Missing acceptance criteria
-- Vague technical details
+Check for: missing core sections, ambiguity, weak structure, missing acceptance criteria, vague technical detail.
 
-ALWAYS provide 3-5 suggestions, even for good PRDs."""
+Always return 3–5 items."""
 
 PRD_ANALYSIS_USER_PROMPT_TEMPLATE = """Analyze this PRD and provide 3-5 improvement suggestions as JSON array.
 
@@ -47,3 +44,15 @@ PRD_SECTION_USER_TEMPLATE = """Section "{section_name}":
 {section_content}
 
 Return 0-3 suggestions as JSON {"suggestions": [...]}. No other text."""
+
+# Stage 2 – Section-level review (hard schema, short prompts)
+STAGE2_SECTION_SYSTEM_PROMPT = """You are a PRD reviewer. Return ONLY valid JSON of this shape, no other text:
+
+{"suggestions": [{"id": "SUG-001", "section": "<section_id>", "type": "add|improve|fix", "original": "", "proposed": "text", "reason": "why", "confidence": 0.0-1.0}]}
+
+Rules: id like SUG-NNN, section = section id given, type add|improve|fix. If no issues return {"suggestions":[]}."""
+
+STAGE2_SECTION_USER_TEMPLATE = """Section id: {section_id}
+{section_content}
+
+Return 0-3 suggestions as JSON with id, section, type, original, proposed, reason, confidence. No other text."""

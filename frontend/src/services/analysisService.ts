@@ -7,11 +7,25 @@
 import { get } from './api';
 import { API_ENDPOINTS } from '../constants/api';
 
+export interface AnalysisScores {
+  structure_score: number;
+  completeness_score: number;
+  total_score: number;
+}
+
+export interface SectionStatusEntry {
+  section_id: string;
+  status: 'ok' | 'timeout' | 'error';
+}
+
 export interface AnalysisStatus {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   started_at: string | null;
   completed_at: string | null;
   error_message: string | null;
+  scores?: AnalysisScores;
+  section_status?: SectionStatusEntry[];
+  incomplete_sections?: string[];
 }
 
 export interface Suggestion {
@@ -43,6 +57,9 @@ export interface AnalysisResult {
       suggestions_by_category: Record<string, number>;
       suggestions_by_priority: Record<string, number>;
     };
+    scores?: AnalysisScores;
+    section_status?: SectionStatusEntry[];
+    incomplete_sections?: string[];
   };
   suggestions: Suggestion[];
 }
