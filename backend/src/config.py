@@ -27,8 +27,11 @@ class Settings(BaseSettings):
     # LLM output cap (suggestions 1 & 4: lower = faster)
     LLM_MAX_TOKENS: int = 2000
 
-    # LLM timeout: max seconds for any LLM API call
+    # LLM timeout: per-call max seconds for Groq API (keep under MAX_ANALYSIS_TIMEOUT_SEC)
     LLM_TIMEOUT_SEC: int = 45
+
+    # Max wall-clock for entire analysis (executor + stream); used by task_processor and stream endpoint
+    MAX_ANALYSIS_TIMEOUT_SEC: int = 120
 
     # Stage 1 structure extraction: max chars per section before sub-chunking
     MAX_SECTION_CHARS: int = 4000

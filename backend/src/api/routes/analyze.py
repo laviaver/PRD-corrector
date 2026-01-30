@@ -142,15 +142,26 @@ async def analyze_prd(
 
 
 def _run_analysis_with_queue(prd, queue: Queue, deep: bool = False) -> None:
-    """Run analyzer in thread; push progress events to queue. deep=True = slow path (multi-LLM)."""
+    """Run analyzer in thread; push progress events to queue. Guarantees complete/error event."""
+    completion_sent = False
+
     def callback(event_type: str, data: dict) -> None:
         queue.put({"event": event_type, "data": data})
 
     try:
         analyzer_service.analyze_prd(prd, progress_callback=callback, deep=deep)
+        completion_sent = True  # analyzer emitted "complete" via callback
     except Exception as e:
         logger.error(f"Stream analysis failed: {e}", exc_info=True)
         queue.put({"event": "error", "data": {"message": str(e)}})
+        completion_sent = True
+    finally:
+        if not completion_sent:
+            logger.error("Analysis ended without sending completion - sending error event")
+            queue.put({
+                "event": "error",
+                "data": {"message": "Analysis ended unexpectedly"},
+            })
 
 
 @router.post("/analyze/stream")
@@ -191,8 +202,17 @@ async def analyze_prd_stream(
 
     async def event_generator():
         loop = asyncio.get_event_loop()
+        timeout_sec = settings.MAX_ANALYSIS_TIMEOUT_SEC
+        start_time = loop.time()
         task = loop.run_in_executor(None, _run_analysis_with_queue, prd, event_queue, deep)
         while True:
+            elapsed = loop.time() - start_time
+            if elapsed > timeout_sec:
+                logger.error(f"Stream timeout after {elapsed:.1f}s")
+                yield _sse_message("error", {
+                    "error": "Analysis timeout - please try again or contact support",
+                })
+                break
             try:
                 item = event_queue.get_nowait()
             except Empty:

@@ -8,6 +8,7 @@ import asyncio
 from typing import Callable
 from uuid import UUID
 
+from src.config import settings
 from src.models.prd import PRD
 from src.services.analyzer import analyzer_service
 from src.services.prd_service import prd_service
@@ -72,13 +73,32 @@ class TaskProcessor:
             storage.update_analysis(analysis)
             logger.info(f"Analysis status updated to PROCESSING: {analysis.id}")
             
-            # Run analysis (this is CPU/IO bound, so we run in executor)
+            # Run analysis with timeout so we never hang indefinitely (fixes 60s "stuck" UX)
             loop = asyncio.get_event_loop()
-            analysis = await loop.run_in_executor(
-                None, analyzer_service.analyze_prd, prd
+            analysis = await asyncio.wait_for(
+                loop.run_in_executor(None, analyzer_service.analyze_prd, prd),
+                timeout=settings.MAX_ANALYSIS_TIMEOUT_SEC,
             )
             logger.info(f"Background analysis completed: {analysis.id}")
             return analysis.id
+        except asyncio.TimeoutError:
+            logger.error(
+                f"Analysis timed out after {settings.MAX_ANALYSIS_TIMEOUT_SEC}s for PRD: {prd.id}"
+            )
+            try:
+                from src.services.storage import storage
+                from src.models.analysis import AnalysisStatus
+                analyses = storage.get_analyses_by_prd(prd.id)
+                if analyses:
+                    analysis = analyses[-1]
+                    analysis.status = AnalysisStatus.FAILED
+                    analysis.error_message = (
+                        f"Analysis timed out after {settings.MAX_ANALYSIS_TIMEOUT_SEC} seconds"
+                    )
+                    storage.update_analysis(analysis)
+            except Exception as update_err:
+                logger.error(f"Failed to update analysis status after timeout: {update_err}")
+            raise
         except Exception as e:
             logger.error(f"Background analysis failed: {e}", exc_info=True)
             # Update analysis status to FAILED
