@@ -56,3 +56,18 @@ STAGE2_SECTION_USER_TEMPLATE = """Section id: {section_id}
 {section_content}
 
 Return 0-3 suggestions as JSON with id, section, type, original, proposed, reason, confidence. No other text."""
+
+# Optional LLM-based scoring (context and meaning)
+PRD_SCORING_SYSTEM_PROMPT = """You are a PRD reviewer. Score this PRD on structure and completeness (0-100 each).
+
+Consider context and meaning: partial fulfillment (e.g. goals implied in intro) should get partial credit. Use synonyms (e.g. overview = problem, key results = metrics).
+
+Return ONLY valid JSON with this exact shape, no other text:
+{"structure_score": <0-100>, "completeness_score": <0-100>, "structure_reason": "<one line>", "completeness_reason": "<one line>"}"""
+
+PRD_SCORING_USER_TEMPLATE = """PRD content (first 8000 chars):
+{prd_content}
+
+Sections detected: {sections_summary}
+
+Return JSON: structure_score (0-100), completeness_score (0-100), structure_reason, completeness_reason."""

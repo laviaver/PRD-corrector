@@ -45,10 +45,68 @@
   margin-top: 1rem;
 }
 
+.file-selected-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
 .file-selected p {
   margin: 0;
   color: #666;
   font-size: 0.9rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-remove {
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background-color: #f8f9fa;
+  color: #495057;
+  border-color: #adb5bd;
+}
+
+.btn-remove:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.file-selected-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-view-markdown {
+  padding: 0.5rem 1rem;
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-view-markdown:hover:not(:disabled) {
+  background-color: #0b5ed7;
+}
+
+.btn-view-markdown:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 
 .btn-upload {
@@ -89,4 +147,70 @@
   .divider {
     padding: 0.5rem 0;
   }
+}
+
+/* Markdown preview modal */
+.markdown-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.markdown-modal {
+  background: white;
+  border-radius: 8px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.markdown-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.markdown-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.markdown-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #6c757d;
+  padding: 0 0.25rem;
+}
+
+.markdown-modal-close:hover {
+  color: #333;
+}
+
+.markdown-modal-content {
+  flex: 1;
+  overflow: auto;
+  margin: 0;
+  padding: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.markdown-modal-error {
+  padding: 1.25rem;
+  color: #721c24;
+  background-color: #f8d7da;
 }

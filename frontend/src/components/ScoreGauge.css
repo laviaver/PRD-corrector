@@ -1,0 +1,40 @@
+.score-gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 90px;
+}
+
+.score-gauge-svg {
+  width: 100%;
+  min-width: 80px;
+  max-width: 100px;
+}
+
+.gauge-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.gauge-track {
+  stroke: #e9ecef;
+}
+
+.gauge-fill {
+  transition: stroke-dasharray 0.4s ease, stroke 0.3s ease;
+}
+
+.score-gauge-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.score-gauge-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}

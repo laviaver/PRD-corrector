@@ -28,7 +28,11 @@ from src.services.prompts import (
 )
 from src.services.storage import storage
 from src.services.scoring import compute_scores
-from src.services.structure_extractor import ExtractedSection, StructureExtractionResult, extract_structure
+from src.services.structure_extractor import (
+    ExtractedSection,
+    StructureExtractionResult,
+    extract_structure,
+)
 from src.services.structure_cache import get_structure_cached
 from src.utils.logger import get_logger
 
@@ -179,10 +183,36 @@ class AnalyzerService:
             t_after_store = time.perf_counter()
             logger.info(f"[TIMING] Stored suggestions in {(t_after_store - t_before_store) * 1000:.0f}ms")
 
-            # Latency rule: deterministic scoring – no LLM. Structure already set (fast: parallel fetch; deep: reuse).
+            # Scoring: rule-based by default; optional LLM or hybrid via SCORING_MODE
             t_before_score = time.perf_counter()
             logger.info("[TIMING] Starting scoring")
             analysis.scores = compute_scores(structure_result.sections, suggestions)
+            scoring_mode = getattr(settings, "SCORING_MODE", "rules").lower()
+            if scoring_mode in ("llm", "hybrid"):
+                sections_summary = self._sections_summary_for_scoring(structure_result.sections)
+                llm_scores = llm_service.score_prd(prd.content, sections_summary)
+                if llm_scores:
+                    rule_struct = analysis.scores.structure_score
+                    rule_comp = analysis.scores.completeness_score
+                    llm_struct = llm_scores["structure_score"]
+                    llm_comp = llm_scores["completeness_score"]
+                    if scoring_mode == "llm":
+                        struct, comp = llm_struct, llm_comp
+                    else:
+                        struct = (rule_struct + llm_struct) // 2
+                        comp = (rule_comp + llm_comp) // 2
+                    total = min(100, round(0.4 * struct + 0.6 * comp))
+                    analysis.scores = AnalysisScores(
+                        structure_score=struct,
+                        completeness_score=comp,
+                        total_score=total,
+                    )
+                    logger.info(
+                        f"[TIMING] LLM scoring applied (mode={scoring_mode}): "
+                        f"structure={struct}, completeness={comp}"
+                    )
+                else:
+                    logger.info("[TIMING] LLM scoring failed or unavailable, using rule-based scores")
             t_after_score = time.perf_counter()
             logger.info(f"[TIMING] Scoring completed in {(t_after_score - t_before_score) * 1000:.0f}ms")
 
@@ -232,6 +262,14 @@ class AnalyzerService:
             return llm_service.analyze_prd(content, system_prompt)
 
         system_prompt = get_prd_analysis_system_prompt_base()
+        # #region agent log
+        try:
+            import json
+            with open("/Users/lavia/PRD-corrector/.cursor/debug.log", "a") as _f:
+                _f.write(json.dumps({"location": "analyzer.py:_single_llm_call", "message": "before one_call", "data": {"prd_content_len": len(prd.content), "system_prompt_len": len(system_prompt)}, "timestamp": __import__("time").time() * 1000, "sessionId": "debug-session", "hypothesisId": "A"}) + "\n")
+        except Exception:
+            pass
+        # #endregion
         with ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(one_call, prd.content, system_prompt)
             try:
@@ -295,6 +333,14 @@ class AnalyzerService:
                     section_status_list.append(SectionStatusEntry(section_id=sec.id, status="error"))
 
         return merged, section_status_list
+
+    def _sections_summary_for_scoring(self, sections: List[ExtractedSection]) -> str:
+        """Build a short summary of section ids for LLM scoring prompt."""
+        base_ids = set()
+        for sec in sections:
+            bid = sec.parent_section_id or (sec.id.split("_")[0] if "_" in sec.id else sec.id)
+            base_ids.add(bid)
+        return ", ".join(sorted(base_ids)) if base_ids else "(none)"
 
     def _parse_stage2_response(self, raw: str, analysis_id: UUID) -> List[Suggestion]:
         """Parse Stage 2 LLM output into SectionSuggestionOutput and map to Suggestion list."""

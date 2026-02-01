@@ -4,7 +4,7 @@ import FileUpload from '../components/FileUpload';
 import TextInput from '../components/TextInput';
 import ContentPreview from '../components/ContentPreview';
 import ErrorModal from '../components/ErrorModal';
-import { uploadPRDFile, pastePRDText } from '../services/prdService';
+import { uploadPRDFile, pastePRDText, getMarkdownPreview } from '../services/prdService';
 import { formatError, logError } from '../utils/errorHandler';
 import './UploadPage.css';
 
@@ -16,6 +16,10 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
   const [showInvalidFileModal, setShowInvalidFileModal] = useState(false);
   const [invalidFileName, setInvalidFileName] = useState<string>('');
+  const [showMarkdownModal, setShowMarkdownModal] = useState(false);
+  const [markdownContent, setMarkdownContent] = useState<string>('');
+  const [markdownLoading, setMarkdownLoading] = useState(false);
+  const [markdownError, setMarkdownError] = useState<string>('');
 
   const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
@@ -42,6 +46,41 @@ export default function UploadPage() {
       setPreviewContent(`File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
     } else {
       setPreviewContent(`File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setPreviewContent('');
+    setError('');
+    setShowMarkdownModal(false);
+    setMarkdownError('');
+  };
+
+  const handleViewMarkdown = async () => {
+    if (!selectedFile) return;
+    setMarkdownError('');
+    const name = selectedFile.name.toLowerCase();
+    if (name.endsWith('.txt') || name.endsWith('.md')) {
+      setMarkdownContent(previewContent);
+      setShowMarkdownModal(true);
+      return;
+    }
+    if (name.endsWith('.docx')) {
+      setMarkdownLoading(true);
+      try {
+        const result = await getMarkdownPreview(selectedFile);
+        setMarkdownContent(result.markdown);
+        setShowMarkdownModal(true);
+      } catch (err) {
+        setMarkdownError(formatError(err));
+        logError(err, 'UploadPage.handleViewMarkdown');
+      } finally {
+        setMarkdownLoading(false);
+      }
+    } else {
+      setMarkdownContent(previewContent);
+      setShowMarkdownModal(true);
     }
   };
 
@@ -116,14 +155,36 @@ export default function UploadPage() {
           />
           {selectedFile && (
             <div className="file-selected">
-              <p>Selected: {selectedFile.name}</p>
-              <button
-                onClick={handleFileUpload}
-                disabled={loading}
-                className="btn-upload"
-              >
-                {loading ? 'Uploading...' : 'Upload & Analyze'}
-              </button>
+              <div className="file-selected-row">
+                <p>Selected: {selectedFile.name}</p>
+                <button
+                  type="button"
+                  onClick={handleRemoveFile}
+                  disabled={loading}
+                  className="btn-remove"
+                  title="Remove file"
+                >
+                  Remove
+                </button>
+              </div>
+              <div className="file-selected-actions">
+                <button
+                  type="button"
+                  onClick={handleViewMarkdown}
+                  disabled={loading || markdownLoading}
+                  className="btn-view-markdown"
+                  title="View markdown version"
+                >
+                  {markdownLoading ? 'Loading…' : 'View Markdown'}
+                </button>
+                <button
+                  onClick={handleFileUpload}
+                  disabled={loading}
+                  className="btn-upload"
+                >
+                  {loading ? 'Uploading...' : 'Upload & Analyze'}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -161,6 +222,29 @@ export default function UploadPage() {
           setInvalidFileName('');
         }}
       />
+
+      {showMarkdownModal && (
+        <div className="markdown-modal-overlay" onClick={() => setShowMarkdownModal(false)}>
+          <div className="markdown-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="markdown-modal-header">
+              <h3>Markdown</h3>
+              <button
+                type="button"
+                className="markdown-modal-close"
+                onClick={() => setShowMarkdownModal(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            {markdownError ? (
+              <div className="markdown-modal-error">{markdownError}</div>
+            ) : (
+              <pre className="markdown-modal-content">{markdownContent}</pre>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

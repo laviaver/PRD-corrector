@@ -12,7 +12,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
-    # Groq (only LLM provider; uses OpenAI-compatible API)
+    # LLM provider: "groq" (cloud, TPM limits) or "ollama" (local, no truncation)
+    LLM_PROVIDER: str = "groq"
+    # Ollama (local; no API key, no TPM limit; full PRD context)
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.2"
+    # Groq (cloud; API key required; on_demand TPM 6000)
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "llama-3.1-8b-instant"  # Faster; use llama-3.3-70b-versatile for quality
 
@@ -35,6 +40,9 @@ class Settings(BaseSettings):
 
     # Stage 1 structure extraction: max chars per section before sub-chunking
     MAX_SECTION_CHARS: int = 4000
+
+    # Scoring: "rules" (default), "llm", or "hybrid" (blend rule-based + LLM)
+    SCORING_MODE: str = "rules"
 
     model_config = SettingsConfigDict(
         env_file=".env",

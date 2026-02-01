@@ -19,6 +19,9 @@ export const API_ENDPOINTS = {
   
   // Export endpoints
   EXPORT: `${API_BASE_URL}/export`,
+
+  // Preview markdown (file → markdown string)
+  PREVIEW_MARKDOWN: `${API_BASE_URL}/preview-markdown`,
 } as const;
 
 export const API_CONFIG = {

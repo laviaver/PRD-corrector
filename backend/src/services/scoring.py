@@ -32,8 +32,27 @@ def _structure_score(sections: List[ExtractedSection]) -> int:
     return min(100, 20 * len(present))
 
 
+# Synonyms for "metrics in text" (graduated: 0 / 15 / 30 by strength)
+_METRICS_PATTERNS = [
+    re.compile(
+        r"\b(metric|kpi|measurable|success\s+criteria|north\s+star|key\s+result)\w*\b",
+        re.I,
+    ),
+    re.compile(
+        r"\b(target|outcome|measure|indicator|okr|baseline|benchmark)\w*\b",
+        re.I,
+    ),
+]
+# Synonyms for "owner / responsible"
+_OWNER_PATTERN = re.compile(
+    r"\b(owner|owned\s+by|responsible|stakeholder|accountable|lead|champion|"
+    r"contact|point\s+of\s+contact)\b",
+    re.I,
+)
+
+
 def _completeness_score(sections: List[ExtractedSection]) -> int:
-    """Signals: KPIs/metrics section +20, measurable metrics in text +30, owner in text +10, max 100."""
+    """Signals: KPIs/metrics section +20, measurable metrics in text (graduated +15/+30), owner +10, max 100."""
     score = 0
     all_text = " ".join(s.text for s in sections).lower()
     base_ids = {_base_section_id(s) for s in sections}
@@ -41,11 +60,14 @@ def _completeness_score(sections: List[ExtractedSection]) -> int:
     # KPIs / metrics section exists
     if "metrics" in base_ids:
         score += 20
-    # Measurable metrics detected in text
-    if re.search(r"metric|kpi|measurable|success\s+criteria|north\s+star", all_text, re.I):
+    # Measurable metrics in text: graduated (0 / 15 / 30) by number of keyword groups found
+    metrics_groups_found = sum(1 for pat in _METRICS_PATTERNS if pat.search(all_text))
+    if metrics_groups_found >= 2:
         score += 30
-    # Owner defined
-    if re.search(r"owner|owned\s+by|responsible", all_text, re.I):
+    elif metrics_groups_found == 1:
+        score += 15
+    # Owner / responsible (synonyms)
+    if _OWNER_PATTERN.search(all_text):
         score += 10
 
     return min(100, score)

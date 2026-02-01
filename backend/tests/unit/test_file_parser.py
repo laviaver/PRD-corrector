@@ -1,7 +1,7 @@
 """
 Unit tests for file parser utility.
 
-Tests extraction of text content from .txt, .md, and .docx files.
+Tests extraction of text content from .txt, .md, .docx, .pdf, and .doc (validation/error).
 """
 
 import pytest
@@ -43,6 +43,23 @@ class TestFileParser:
         # For now, we'll test that the function handles .docx files
         # In a real scenario, we'd use python-docx to create a test file
         pytest.skip("Requires actual .docx file creation - will implement with python-docx")
+
+    def test_parse_pdf_file(self):
+        """Test parsing a .pdf file with extractable text."""
+        import fitz
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((72, 72), "Test PRD content from PDF.")
+        raw = doc.write()
+        doc.close()
+        result = parse_file(BytesIO(raw), "test.pdf", PRDFileType.PDF)
+        assert "Test PRD content from PDF" in result
+
+    def test_parse_doc_raises_unsupported(self):
+        """Test that legacy .doc raises FileParseError (not yet supported)."""
+        file_content = BytesIO(b"dummy binary .doc content")
+        with pytest.raises(FileParseError, match="Legacy .doc format is not yet supported"):
+            parse_file(file_content, "test.doc", PRDFileType.DOC)
 
     def test_parse_file_invalid_type(self):
         """Test that invalid file type raises error."""

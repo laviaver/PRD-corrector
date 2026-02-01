@@ -54,12 +54,13 @@ class TestPRDService:
         with pytest.raises(ValueError, match="Content cannot be empty"):
             prd_service.create_prd_from_text("")
 
-    def test_create_prd_from_file_invalid_type(self):
-        """Test that invalid file type raises error."""
-        content = b"test content"
-        
-        with pytest.raises(ValidationError):
-            prd_service.create_prd_from_file(content, "test.pdf")
+    def test_create_prd_from_file_other_type(self):
+        """Test that unknown extension (.xyz) is accepted and converted to text."""
+        content = b"test content from xyz file"
+        prd = prd_service.create_prd_from_file(content, "doc.xyz")
+        assert prd.content == "test content from xyz file"
+        assert prd.file_type == PRDFileType.OTHER
+        assert prd.filename == "doc.xyz"
 
     def test_create_prd_from_file_too_large(self):
         """Test that file too large raises error."""

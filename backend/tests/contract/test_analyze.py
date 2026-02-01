@@ -37,7 +37,12 @@ class TestAnalyzeEndpoint:
         assert "prd_id" in data
         assert "analysis_id" in data
         assert "message" in data
-        assert "Analysis initiated" in data["message"] or "PRD uploaded successfully" in data["message"]
+        assert (
+            "Analysis initiated" in data["message"]
+            or "PRD uploaded successfully" in data["message"]
+            or "Converting" in data["message"]
+            or "analysis will start" in data["message"]
+        )
 
     def test_analyze_with_file_upload_md(self):
         """Test analyze endpoint with .md file upload."""
@@ -86,16 +91,16 @@ class TestAnalyzeEndpoint:
         assert "not both" in str(error_msg)
 
     def test_analyze_invalid_file_type(self):
-        """Test that invalid file type returns error."""
+        """Test that file with no extension returns error."""
         file_content = b"Test content"
-        files = {"file": ("test.pdf", BytesIO(file_content), "application/pdf")}
+        files = {"file": ("README", BytesIO(file_content), "application/octet-stream")}
         
         response = client.post("/api/analyze", files=files)
         
         assert response.status_code == 400
         data = response.json()
-        # Error handler may return "error" or "detail"
         assert "error" in data or "detail" in data
+        assert "extension" in str(data).lower()
 
     def test_analyze_file_too_large(self):
         """Test that file too large returns error."""

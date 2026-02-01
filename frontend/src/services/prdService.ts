@@ -42,3 +42,19 @@ export async function pastePRDText(text: string): Promise<AnalyzeResponse> {
   // Don't set Content-Type header - let browser set it with boundary
   return post<AnalyzeResponse>(API_ENDPOINTS.ANALYZE, formData);
 }
+
+export interface PreviewMarkdownResponse {
+  markdown: string;
+}
+
+/**
+ * Get markdown version of an uploaded PRD file (same conversion as analysis).
+ */
+export async function getMarkdownPreview(file: File): Promise<PreviewMarkdownResponse> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return post<PreviewMarkdownResponse>(API_ENDPOINTS.PREVIEW_MARKDOWN, formData, {
+    timeout: API_CONFIG.UPLOAD_TIMEOUT_MS,
+  });
+}

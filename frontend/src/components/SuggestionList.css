@@ -13,17 +13,21 @@
 .suggestion-list.grouped {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1rem;
 }
 
 .suggestion-group {
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.suggestion-group:last-child {
+  margin-bottom: 0;
 }
 
 .group-title {
-  margin: 0 0 1rem 0;
-  font-size: 1.25rem;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
   color: #333;
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.35rem;
   border-bottom: 2px solid #ddd;
 }

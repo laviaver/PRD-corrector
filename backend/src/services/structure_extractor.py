@@ -22,35 +22,54 @@ CANONICAL_IDS = frozenset({"problem", "goals", "non_goals", "metrics", "risks", 
 HEADER_TO_CANONICAL: List[tuple] = [
     # problem
     ("problem statement", "problem"),
-    ("problem", "problem"),
+    ("executive summary", "problem"),
+    ("overview", "problem"),
     ("background", "problem"),
     ("context", "problem"),
+    ("opportunity", "problem"),
+    ("current state", "problem"),
+    ("problem", "problem"),
     # non_goals (before goals so "non-goals" doesn't match "goals")
     ("non-goals", "non_goals"),
     ("non goals", "non_goals"),
     ("out of scope", "non_goals"),
     ("scope exclusions", "non_goals"),
+    ("exclusions", "non_goals"),
+    ("non-objectives", "non_goals"),
     # goals
     ("goals", "goals"),
     ("objectives", "goals"),
     ("objective", "goals"),
     ("aims", "goals"),
+    ("targets", "goals"),
+    ("outcomes", "goals"),
+    ("vision", "goals"),
+    ("purpose", "goals"),
     # metrics
     ("success metrics", "metrics"),
-    ("metrics", "metrics"),
-    ("kpis", "metrics"),
+    ("key results", "metrics"),
     ("key performance indicators", "metrics"),
     ("success criteria", "metrics"),
+    ("measurements", "metrics"),
+    ("okrs", "metrics"),
+    ("north star", "metrics"),
+    ("metrics", "metrics"),
+    ("kpis", "metrics"),
     # risks
     ("risks", "risks"),
     ("assumptions", "risks"),
     ("dependencies", "risks"),
+    ("constraints", "risks"),
+    ("limitations", "risks"),
+    ("open questions", "risks"),
 ]
 
 
 def _normalize_header(header: str) -> str:
-    """Normalize header for lookup: strip, lower, collapse spaces."""
-    return " ".join(header.lower().strip().split())
+    """Normalize header for lookup: strip, lower, collapse spaces, strip punctuation."""
+    s = " ".join(header.lower().strip().split())
+    # Strip trailing/leading punctuation so "Success Metrics:" still matches
+    return s.strip(".:;,")
 
 
 def _header_to_canonical_id(header: str) -> str:

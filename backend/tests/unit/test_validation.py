@@ -24,15 +24,16 @@ class TestFileValidation:
         assert validate_file_type("test.txt") == PRDFileType.TXT
         assert validate_file_type("test.md") == PRDFileType.MD
         assert validate_file_type("test.docx") == PRDFileType.DOCX
+        assert validate_file_type("test.pdf") == PRDFileType.PDF
+        assert validate_file_type("test.doc") == PRDFileType.DOC
+        assert validate_file_type("test.rtf") == PRDFileType.RTF
+        assert validate_file_type("test.odt") == PRDFileType.ODT
         assert validate_file_type("TEST.TXT") == PRDFileType.TXT  # Case insensitive
 
-    def test_validate_file_type_invalid(self):
-        """Test that invalid file types raise error."""
-        with pytest.raises(ValidationError, match="Unsupported file type"):
-            validate_file_type("test.pdf")
-        
-        with pytest.raises(ValidationError, match="Unsupported file type"):
-            validate_file_type("test.doc")  # Old Word format
+    def test_validate_file_type_other(self):
+        """Test that unknown extensions are accepted as OTHER (convert to text in background)."""
+        assert validate_file_type("test.xyz") == PRDFileType.OTHER
+        assert validate_file_type("doc.unknown") == PRDFileType.OTHER
 
     def test_validate_file_type_no_extension(self):
         """Test that files without extension raise error."""
@@ -82,13 +83,13 @@ class TestFileValidation:
         assert file_type == PRDFileType.TXT
         assert size == len(content)
 
-    def test_validate_file_invalid_type(self):
-        """Test validation fails for invalid file type."""
+    def test_validate_file_other_type(self):
+        """Test that unknown extension is accepted (OTHER) and size is returned."""
         content = b"Test content"
         file_content = BytesIO(content)
-        
-        with pytest.raises(ValidationError):
-            validate_file(file_content, "test.pdf")
+        file_type, size = validate_file(file_content, "test.xyz")
+        assert file_type == PRDFileType.OTHER
+        assert size == len(content)
 
     def test_validate_file_too_large(self):
         """Test validation fails for file too large."""

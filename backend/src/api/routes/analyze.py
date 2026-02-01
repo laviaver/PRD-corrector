@@ -31,8 +31,9 @@ from src.services.storage import storage
 from src.services.task_processor import task_processor
 from src.services.analyzer import analyzer_service
 from src.services.validation import ValidationError, validate_file
-from src.utils.file_parser import FileParseError
+from src.utils.file_parser import FileParseError, parse_file
 from src.utils.logger import get_logger
+from io import BytesIO
 
 logger = get_logger(__name__)
 
@@ -56,6 +57,37 @@ class AnalyzeResponse(BaseModel):
     prd_id: str | None  # null for file uploads until conversion completes
     analysis_id: str | None = None
     message: str
+
+
+class PreviewMarkdownResponse(BaseModel):
+    """Response model for preview-markdown endpoint."""
+
+    markdown: str
+
+
+@router.post("/preview-markdown", response_model=PreviewMarkdownResponse)
+async def preview_markdown(file: UploadFile = File(..., description="PRD file to convert to markdown")):
+    """
+    Convert uploaded PRD file to markdown (same conversion used for analysis).
+    Returns the markdown string so the client can show it before uploading for analysis.
+    """
+    if not file.filename:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File name required")
+    file_content = await file.read()
+    file_io = BytesIO(file_content)
+    try:
+        file_type, _ = validate_file(file_io, file.filename)
+    except ValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message) from e
+    try:
+        file_io.seek(0)
+        markdown = parse_file(file_io, file.filename, file_type)
+    except FileParseError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=e.message or "Failed to convert file to markdown",
+        ) from e
+    return PreviewMarkdownResponse(markdown=markdown)
 
 
 @router.post("/analyze", response_model=AnalyzeResponse, status_code=status.HTTP_201_CREATED)

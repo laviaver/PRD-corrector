@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import AnalysisStatus from '../components/AnalysisStatus';
 import SuggestionList from '../components/SuggestionList';
 import AnalysisSummary from '../components/AnalysisSummary';
-import ExportButton from '../components/ExportButton';
+import ScoreGauge from '../components/ScoreGauge';
 import { getAnalysis, getAnalysisByPRD, AnalysisResult } from '../services/analysisService';
 import { formatError, logError } from '../utils/errorHandler';
 import './ResultsPage.css';
@@ -107,23 +107,14 @@ export default function ResultsPage() {
           />
         </div>
       ) : (
-        <>
+        <div className="results-content">
           {analysisData.scores && (
             <div className="scores-section" data-testid="scores-section">
               <h2>PRD Scores</h2>
-              <div className="scores-grid">
-                <div className="score-item">
-                  <span className="score-label">Structure</span>
-                  <span className="score-value">{analysisData.scores.structure_score}/100</span>
-                </div>
-                <div className="score-item">
-                  <span className="score-label">Completeness</span>
-                  <span className="score-value">{analysisData.scores.completeness_score}/100</span>
-                </div>
-                <div className="score-item">
-                  <span className="score-label">Total</span>
-                  <span className="score-value score-total">{analysisData.scores.total_score}/100</span>
-                </div>
+              <div className="scores-grid gauges">
+                <ScoreGauge label="Structure" score={analysisData.scores.structure_score} />
+                <ScoreGauge label="Completeness" score={analysisData.scores.completeness_score} />
+                <ScoreGauge label="Total" score={analysisData.scores.total_score} />
               </div>
             </div>
           )}
@@ -143,16 +134,13 @@ export default function ResultsPage() {
             />
           )}
 
-          <div className="export-section">
-            <ExportButton analysisId={analysisData.id} format="markdown" />
-            <ExportButton analysisId={analysisData.id} format="json" />
-          </div>
-
           <div className="suggestions-section">
             <h2>Suggestions</h2>
-            <SuggestionList suggestions={suggestions} groupBy="category" />
+            <div className="suggestion-list-wrapper">
+              <SuggestionList suggestions={suggestions} groupBy="category" />
+            </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
