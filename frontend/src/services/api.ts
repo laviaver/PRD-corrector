@@ -51,11 +51,17 @@ apiClient.interceptors.response.use(
     if (error.response) {
       // Server responded with error status
       const status = error.response.status;
-      const data = error.response.data as { error?: string; message?: string };
-      
-      const msg = (data as { message?: string; error?: string; detail?: string }).detail
-        ?? (data as { message?: string; error?: string }).message
-        ?? (data as { message?: string; error?: string }).error;
+      const data = error.response.data;
+      // #region agent log
+      try {
+        const dataType = data === null || data === undefined ? 'null' : typeof data;
+        const snippet = typeof data === 'string' ? data.slice(0, 300) : (typeof data === 'object' ? JSON.stringify(data).slice(0, 300) : String(data));
+        fetch('http://127.0.0.1:7242/ingest/aaa3e728-00f3-429e-b53a-5c8d5e3b776b', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ location: 'api.ts:response_error', message: '500 or error response', data: { status, dataType, snippet, url: error.config?.url }, timestamp: Date.now(), sessionId: 'debug-session', hypothesisId: 'E' }) }).catch(() => {});
+      } catch (_) {}
+      // #endregion
+      const obj = data && typeof data === 'object' ? (data as { detail?: string; message?: string; error?: string }) : null;
+      const msg = obj?.detail ?? obj?.message ?? obj?.error ?? (typeof data === 'string' ? data.slice(0, 200) : null);
+
       switch (status) {
         case 400:
           throw new Error(msg || 'Bad request');
@@ -66,13 +72,21 @@ apiClient.interceptors.response.use(
         case 422:
           throw new Error(msg || 'Validation error');
         case 500:
-          throw new Error(msg || 'Internal server error');
+          throw new Error(
+            msg ||
+              'Server error with no details. The backend may not be running. Start it with: ./backend/run.sh or: cd backend && python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 (use python -m uvicorn, not uvicorn directly)'
+          );
         default:
           throw new Error(msg || `Request failed with status ${status}`);
       }
     } else if (error.request) {
-      // Request made but no response received
-      throw new Error('Network error: No response from server');
+      // Request made but no response received (backend down, timeout, or connection reset)
+      const isTimeout = error.code === 'ECONNABORTED' || error.message?.toLowerCase().includes('timeout');
+      throw new Error(
+        isTimeout
+          ? 'Request timed out. The server may be busy or the file is large—try again.'
+          : 'Network error: No response from server. Check that the backend is running (e.g. port 8000) and try again.'
+      );
     } else {
       // Error setting up request
       throw new Error(error.message || 'Request setup error');

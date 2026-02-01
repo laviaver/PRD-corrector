@@ -15,6 +15,7 @@ logger = get_logger(__name__)
 
 # Configuration
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+# Only .docx, .md, .txt are allowed
 ALLOWED_EXTENSIONS = {'.txt', '.md', '.docx'}
 
 
@@ -29,6 +30,7 @@ class ValidationError(Exception):
 def validate_file_type(filename: str) -> PRDFileType:
     """
     Validate file type based on extension.
+    Only .docx, .md, .txt are allowed.
 
     Args:
         filename: Name of the file
@@ -52,7 +54,7 @@ def validate_file_type(filename: str) -> PRDFileType:
         return PRDFileType.DOCX
     else:
         raise ValidationError(
-            f"Unsupported file type: {extension}. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}"
+            f"File type '{extension}' is not supported. Only .docx, .md, and .txt files are allowed."
         )
 
 

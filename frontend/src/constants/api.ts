@@ -23,7 +23,9 @@ export const API_ENDPOINTS = {
 
 export const API_CONFIG = {
   BASE_URL: API_BASE_URL,
-  TIMEOUT: 30000, // 30 seconds
+  TIMEOUT: 30000, // 30 seconds default
+  /** Upload must complete before server responds; allow large/slow uploads (max 10MB) */
+  UPLOAD_TIMEOUT_MS: 300_000, // 5 minutes
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000, // 1 second
 } as const;

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import FileUpload from '../components/FileUpload';
 import TextInput from '../components/TextInput';
 import ContentPreview from '../components/ContentPreview';
+import ErrorModal from '../components/ErrorModal';
 import { uploadPRDFile, pastePRDText } from '../services/prdService';
 import { formatError, logError } from '../utils/errorHandler';
 import './UploadPage.css';
@@ -13,6 +14,8 @@ export default function UploadPage() {
   const [previewContent, setPreviewContent] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [showInvalidFileModal, setShowInvalidFileModal] = useState(false);
+  const [invalidFileName, setInvalidFileName] = useState<string>('');
 
   const handleFileSelect = async (file: File) => {
     setSelectedFile(file);
@@ -28,12 +31,25 @@ export default function UploadPage() {
       setError('Failed to read file for preview.');
     };
 
-    if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+    const name = file.name.toLowerCase();
+    if (
+      file.type === 'text/plain' ||
+      name.endsWith('.txt') ||
+      name.endsWith('.md')
+    ) {
       reader.readAsText(file);
+    } else if (name.endsWith('.docx')) {
+      setPreviewContent(`File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
     } else {
-      // For .docx, we can't preview easily, so just show filename
       setPreviewContent(`File: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
     }
+  };
+
+  const handleInvalidFileType = (filename: string) => {
+    setInvalidFileName(filename);
+    setShowInvalidFileModal(true);
+    setSelectedFile(null);
+    setPreviewContent('');
   };
 
   const handleTextSubmit = async (text: string) => {
@@ -96,6 +112,7 @@ export default function UploadPage() {
           <FileUpload
             onFileSelect={handleFileSelect}
             onError={setError}
+            onInvalidFileType={handleInvalidFileType}
           />
           {selectedFile && (
             <div className="file-selected">
@@ -134,6 +151,16 @@ export default function UploadPage() {
           <strong>Error:</strong> {error}
         </div>
       )}
+
+      <ErrorModal
+        isOpen={showInvalidFileModal}
+        title="Invalid File Type"
+        message={`The file "${invalidFileName}" is not supported. Please upload only .docx, .md, or .txt files.`}
+        onAcknowledge={() => {
+          setShowInvalidFileModal(false);
+          setInvalidFileName('');
+        }}
+      />
     </div>
   );
 }

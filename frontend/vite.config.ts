@@ -10,6 +10,11 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+        timeout: 300_000, // 5 min so large/slow uploads don't get cut off
+      },
+      '/health': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
       },
     },
   },

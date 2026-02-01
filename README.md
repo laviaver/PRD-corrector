@@ -16,7 +16,30 @@ This will:
 - ✅ Start frontend server (http://localhost:5173)
 - ✅ Show logs and status
 
-### Manual Setup
+### Run backend only
+
+If you need to start just the backend (e.g. for API work):
+
+```bash
+./start.sh   # starts both backend + frontend
+```
+
+Or run the backend by itself:
+
+```bash
+./backend/run.sh
+```
+
+Or manually (from `backend/` with venv activated):
+
+```bash
+cd backend && source venv/bin/activate
+python -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+> **If you get "uvicorn: command not found"** — do not run `uvicorn` directly. Use `python -m uvicorn` (or `python3 -m uvicorn`) as above, or use `./backend/run.sh`.
+
+### Manual setup (full)
 
 See [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) for detailed setup instructions.
 

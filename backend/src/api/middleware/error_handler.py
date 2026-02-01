@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from src.config import settings
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -57,13 +58,28 @@ async def error_handler(request: Request, exc: Exception) -> JSONResponse:
     Returns:
         JSONResponse with error details
     """
+    # #region agent log
+    import json
+    import time
+    try:
+        path = getattr(getattr(request, "url", None), "path", None) or getattr(request, "path", None)
+        with open("/Users/lavia/PRD-corrector/.cursor/debug.log", "a") as f:
+            f.write(json.dumps({"location": "error_handler.py:error_handler", "message": "global error_handler", "data": {"path": path, "method": getattr(request, "method", None), "exc_type": type(exc).__name__, "exc_msg": str(exc)[:200]}, "timestamp": time.time() * 1000, "sessionId": "debug-session", "hypothesisId": "A"}) + "\n")
+    except Exception:
+        pass
+    # #endregion
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
+
+    message = "An unexpected error occurred"
+    exc_str = f"{type(exc).__name__}: {exc}"[:500]
+    detail = f"{message}. {exc_str}"
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "error": "Internal server error",
-            "message": "An unexpected error occurred",
+            "message": message,
+            "detail": detail,
             "type": type(exc).__name__,
         },
     )

@@ -64,7 +64,8 @@ export default function AnalysisStatus({
   }, [analysisId, onComplete, pollInterval, stopPolling]);
 
   useEffect(() => {
-    if (status?.status !== 'processing' && status?.status !== 'pending') return;
+    const inProgress = status?.status === 'processing' || status?.status === 'pending' || status?.status === 'converting';
+    if (!inProgress) return;
     const t = setInterval(() => {
       setElapsed(Math.round((Date.now() - startTimeRef.current) / 1000));
     }, 1000);
@@ -84,7 +85,7 @@ export default function AnalysisStatus({
     );
   }
 
-  if (stuck && status && (status.status === 'processing' || status.status === 'pending')) {
+  if (stuck && status && (status.status === 'processing' || status.status === 'pending' || status.status === 'converting')) {
     return (
       <div className="analysis-status stuck">
         <strong>Taking longer than expected</strong>
@@ -103,6 +104,7 @@ export default function AnalysisStatus({
   }
 
   const statusMessages: Record<string, string> = {
+    converting: 'Converting file to text...',
     pending: 'Analysis queued...',
     processing: 'Analyzing PRD...',
     completed: 'Analysis completed!',
@@ -112,10 +114,10 @@ export default function AnalysisStatus({
   return (
     <div className={`analysis-status ${status.status}`}>
       <div className="status-indicator">
-        {status.status === 'processing' && <span className="spinner" />}
+        {(status.status === 'processing' || status.status === 'converting') && <span className="spinner" />}
         <span className="status-text">{statusMessages[status.status] ?? status.status}</span>
       </div>
-      {(status.status === 'processing' || status.status === 'pending') && (
+      {(status.status === 'processing' || status.status === 'pending' || status.status === 'converting') && (
         <div className="status-details">
           <p>This usually takes 10–30 seconds.{elapsed > 0 && ` Elapsed: ${elapsed}s`}</p>
         </div>

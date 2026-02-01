@@ -13,11 +13,16 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class PRDFileType(str, Enum):
-    """Supported PRD file types."""
+    """Supported PRD file types. All are converted to text in the background before analysis."""
 
     TXT = "txt"
     MD = "md"
     DOCX = "docx"
+    PDF = "pdf"
+    DOC = "doc"
+    RTF = "rtf"
+    ODT = "odt"
+    OTHER = "other"  # Any other extension; we try to decode as text
 
 
 class PRD(BaseModel):

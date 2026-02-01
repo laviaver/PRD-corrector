@@ -10,7 +10,8 @@
   color: #856404;
 }
 
-.analysis-status.processing {
+.analysis-status.processing,
+.analysis-status.converting {
   background-color: #d1ecf1;
   border: 1px solid #17a2b8;
   color: #0c5460;

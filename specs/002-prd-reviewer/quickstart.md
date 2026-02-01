@@ -85,9 +85,14 @@ VITE_API_URL=http://localhost:8000/api
 ### Start Backend Server
 
 ```bash
-# From backend/ directory with venv activated
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+# From project root (easiest — no need to type uvicorn):
+./backend/run.sh
+
+# Or from backend/ with venv activated:
+python -m uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+> If you get **"uvicorn: command not found"**, use `python -m uvicorn` (or `python3 -m uvicorn`) as above; do not run `uvicorn` directly.
 
 The API will be available at `http://localhost:8000`
 API documentation (Swagger UI) at `http://localhost:8000/docs`

@@ -70,6 +70,38 @@ class PRDService:
 
         return stored_prd
 
+    def create_prd_from_extracted_text(
+        self,
+        content: str,
+        filename: str,
+        file_type: PRDFileType,
+        size: int,
+    ) -> PRD:
+        """
+        Create a PRD from already-extracted text (e.g. after background conversion).
+
+        Args:
+            content: Extracted text content
+            filename: Original filename
+            file_type: Detected file type
+            size: File size in bytes
+
+        Returns:
+            Created PRD model
+        """
+        content = content.strip()
+        if not content:
+            raise ValueError("Extracted content cannot be empty")
+        prd = PRD(
+            content=content,
+            filename=filename,
+            file_type=file_type,
+            size=size,
+        )
+        stored_prd = storage.create_prd(prd)
+        logger.info(f"PRD created: {stored_prd.id} from extracted text ({filename})")
+        return stored_prd
+
     def create_prd_from_text(self, text_content: str) -> PRD:
         """
         Create a PRD from pasted text content.

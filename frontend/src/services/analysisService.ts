@@ -19,7 +19,8 @@ export interface SectionStatusEntry {
 }
 
 export interface AnalysisStatus {
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'converting' | 'pending' | 'processing' | 'completed' | 'failed';
+  prd_id?: string | null;
   started_at: string | null;
   completed_at: string | null;
   error_message: string | null;
@@ -47,7 +48,7 @@ export interface Suggestion {
 export interface AnalysisResult {
   analysis: {
     id: string;
-    prd_id: string;
+    prd_id?: string | null;
     status: string;
     started_at: string;
     completed_at: string | null;

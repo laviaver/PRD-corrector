@@ -4,7 +4,7 @@ In-memory storage service for PRD and Analysis data.
 This module provides session-based storage for MVP. Phase 2 will migrate to persistent storage.
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 from uuid import UUID
 
 from src.models.analysis import Analysis
@@ -28,6 +28,7 @@ class StorageService:
         self._prds: Dict[UUID, PRD] = {}
         self._analyses: Dict[UUID, Analysis] = {}
         self._suggestions: Dict[UUID, Suggestion] = {}
+        self._pending_uploads: Dict[UUID, Tuple[bytes, str]] = {}  # analysis_id -> (bytes, filename)
         logger.info("Storage service initialized (in-memory)")
 
     # PRD operations
@@ -142,6 +143,19 @@ class StorageService:
             List of analyses for the PRD
         """
         return [a for a in self._analyses.values() if a.prd_id == prd_id]
+
+    # Pending upload (file bytes + filename for background conversion)
+    def set_pending_upload(self, analysis_id: UUID, file_bytes: bytes, filename: str) -> None:
+        """Store raw file for an analysis that is in CONVERTING state."""
+        self._pending_uploads[analysis_id] = (file_bytes, filename)
+        logger.debug(f"Pending upload set for analysis {analysis_id}")
+
+    def get_and_remove_pending_upload(self, analysis_id: UUID) -> Optional[Tuple[bytes, str]]:
+        """Load and remove pending file for an analysis. Returns (bytes, filename) or None."""
+        entry = self._pending_uploads.pop(analysis_id, None)
+        if entry is not None:
+            logger.debug(f"Pending upload removed for analysis {analysis_id}")
+        return entry
 
     # Suggestion operations
     def create_suggestion(self, suggestion: Suggestion) -> Suggestion:

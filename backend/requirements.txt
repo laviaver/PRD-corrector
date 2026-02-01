@@ -6,6 +6,8 @@ pydantic-settings==2.5.2
 
 # Document parsing
 python-docx==1.1.2
+pymupdf==1.25.1
+mammoth==1.8.0  # Convert .docx to markdown
 
 # LLM integration (Groq only; OpenAI-compatible API)
 openai==1.51.0

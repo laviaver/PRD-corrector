@@ -49,6 +49,20 @@ class AnalysisService:
 
         return analysis
 
+    def create_analysis_converting(self) -> Analysis:
+        """
+        Create an analysis record in CONVERTING state (no PRD yet).
+        Used for file uploads; background task will set prd_id and move to PENDING.
+        """
+        from src.models.analysis import Analysis
+        analysis = Analysis(
+            prd_id=None,
+            status=AnalysisStatus.CONVERTING,
+        )
+        analysis = storage.create_analysis(analysis)
+        logger.info(f"Analysis created in CONVERTING state: {analysis.id}")
+        return analysis
+
     def get_analysis(self, analysis_id: UUID) -> Analysis | None:
         """
         Retrieve analysis by ID.
@@ -69,7 +83,7 @@ class AnalysisService:
             analysis_id: Analysis identifier
 
         Returns:
-            Status dictionary
+            Status dictionary (prd_id may be null while status is converting)
         """
         analysis = storage.get_analysis(analysis_id)
         if not analysis:
@@ -77,6 +91,7 @@ class AnalysisService:
 
         out = {
             "status": analysis.status.value,
+            "prd_id": str(analysis.prd_id) if analysis.prd_id else None,
             "started_at": analysis.started_at.isoformat() if analysis.started_at else None,
             "completed_at": analysis.completed_at.isoformat() if analysis.completed_at else None,
             "error_message": analysis.error_message,

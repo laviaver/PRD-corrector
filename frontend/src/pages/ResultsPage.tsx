@@ -98,7 +98,7 @@ export default function ResultsPage() {
         </button>
       </div>
 
-      {analysisData.status === 'processing' || analysisData.status === 'pending' ? (
+      {analysisData.status === 'processing' || analysisData.status === 'pending' || analysisData.status === 'converting' ? (
         <div className="analysis-in-progress">
           <AnalysisStatus
             analysisId={analysisData.id}

@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 class AnalysisStatus(str, Enum):
     """Analysis status values."""
 
+    CONVERTING = "converting"  # File conversion in progress; no PRD yet
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -52,7 +53,7 @@ class Analysis(BaseModel):
     """Analysis model representing a PRD analysis run."""
 
     id: UUID = Field(default_factory=uuid4, description="Unique identifier for the analysis")
-    prd_id: UUID = Field(..., description="Reference to the PRD being analyzed")
+    prd_id: Optional[UUID] = Field(None, description="Reference to the PRD; None while status is CONVERTING")
     status: AnalysisStatus = Field(
         default=AnalysisStatus.PENDING, description="Current status of the analysis"
     )

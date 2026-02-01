@@ -55,15 +55,28 @@ class AnalyzerService:
         prd: PRD,
         progress_callback: Callable[[str, dict], None] | None = None,
         deep: bool = False,
+        existing_analysis_id: UUID | None = None,
     ) -> Analysis:
         """
         Analyze a PRD. Default: single-pass, 1 LLM call. deep=True: slow path (per-section).
+        If existing_analysis_id is provided (e.g. from task_processor), update that analysis
+        instead of creating a new one so the client's analysis_id reaches COMPLETED.
         """
-        t0 = time.perf_counter()
+        t_start = time.perf_counter()
+        logger.info(f"[TIMING] Analysis started for PRD {prd.id}, deep={deep}")
         llm_call_count: List[int] = [0]  # mutable so wrapper can increment
 
-        analysis = Analysis(prd_id=prd.id, status=AnalysisStatus.PROCESSING)
-        analysis = storage.create_analysis(analysis)
+        if existing_analysis_id:
+            analysis = storage.get_analysis(existing_analysis_id)
+            if not analysis:
+                raise ValueError(f"Analysis not found: {existing_analysis_id}")
+            analysis.status = AnalysisStatus.PROCESSING
+            storage.update_analysis(analysis)
+        else:
+            analysis = Analysis(prd_id=prd.id, status=AnalysisStatus.PROCESSING)
+            analysis = storage.create_analysis(analysis)
+        t_create = time.perf_counter()
+        logger.info(f"[TIMING] Analysis record created in {(t_create - t_start) * 1000:.0f}ms")
 
         def emit(event_type: str, data: dict) -> None:
             if progress_callback:
@@ -71,6 +84,8 @@ class AnalyzerService:
 
         try:
             emit("started", {"analysis_id": str(analysis.id)})
+            t_before_llm = time.perf_counter()
+            logger.info("[TIMING] Starting LLM call")
 
             # Latency rule: deterministic routing – no LLM for routing; rule-based.
             # Fast path (default): 1 LLM call. Slow path (deep): explicit multi-call.
@@ -115,6 +130,13 @@ class AnalyzerService:
                     except FuturesTimeoutError:
                         f_llm.cancel()
                         raise
+                t_after_llm = time.perf_counter()
+                logger.info(f"[TIMING] LLM call completed in {(t_after_llm - t_before_llm) * 1000:.0f}ms")
+
+            # Deep path: t_after_llm set above only in else branch; set for deep path too for breakdown
+            if deep:
+                t_after_llm = time.perf_counter()
+                logger.info(f"[TIMING] LLM call completed in {(t_after_llm - t_before_llm) * 1000:.0f}ms")
 
             # Instrumentation: fail if >2 LLM calls (unintentional)
             if llm_call_count[0] > MAX_LLM_CALLS_PER_REQUEST:
@@ -128,10 +150,14 @@ class AnalyzerService:
                 "latency: llm_calls=%s tool_calls=%s time_to_first_useful_ms=%.0f",
                 llm_call_count[0],
                 tool_call_count,
-                (t1 - t0) * 1000,
+                (t1 - t_start) * 1000,
             )
 
             logger.info(f"Parsed {len(suggestions)} suggestions from LLM response")
+            t_after_parse = time.perf_counter()
+            logger.info(
+                f"[TIMING] Parsed {len(suggestions)} suggestions in {(t_after_parse - t_after_llm) * 1000:.0f}ms",
+            )
 
             # If no suggestions found, add helpful default
             if not suggestions:
@@ -146,18 +172,38 @@ class AnalyzerService:
                 suggestions = [default_suggestion]
 
             # Store suggestions
+            t_before_store = time.perf_counter()
+            logger.info(f"[TIMING] Starting to store {len(suggestions)} suggestions")
             for suggestion in suggestions:
                 storage.create_suggestion(suggestion)
+            t_after_store = time.perf_counter()
+            logger.info(f"[TIMING] Stored suggestions in {(t_after_store - t_before_store) * 1000:.0f}ms")
 
             # Latency rule: deterministic scoring – no LLM. Structure already set (fast: parallel fetch; deep: reuse).
+            t_before_score = time.perf_counter()
+            logger.info("[TIMING] Starting scoring")
             analysis.scores = compute_scores(structure_result.sections, suggestions)
+            t_after_score = time.perf_counter()
+            logger.info(f"[TIMING] Scoring completed in {(t_after_score - t_before_score) * 1000:.0f}ms")
 
             # Update analysis status
+            t_before_final = time.perf_counter()
+            logger.info("[TIMING] Updating final analysis status")
             analysis.status = AnalysisStatus.COMPLETED
             analysis.summary = self._generate_summary(suggestions)
             analysis.section_status = section_status_list if section_status_list else None
             analysis.incomplete_sections = incomplete_sections if incomplete_sections else None
             storage.update_analysis(analysis)
+
+            t_end = time.perf_counter()
+            total_ms = (t_end - t_start) * 1000
+            logger.info(f"[TIMING] ✓ Analysis COMPLETE in {total_ms:.0f}ms total")
+            logger.info(
+                f"[TIMING] Breakdown - LLM: {(t_after_llm - t_before_llm) * 1000:.0f}ms, "
+                f"Parse: {(t_after_parse - t_after_llm) * 1000:.0f}ms, "
+                f"Store: {(t_after_store - t_before_store) * 1000:.0f}ms, "
+                f"Score: {(t_after_score - t_before_score) * 1000:.0f}ms",
+            )
 
             emit("complete", {"analysis_id": str(analysis.id), "summary": analysis.summary.model_dump() if analysis.summary else None})
             logger.info(f"Analysis completed: {analysis.id} with {len(suggestions)} suggestions")

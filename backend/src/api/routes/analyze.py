@@ -7,17 +7,30 @@ Supports streaming (SSE) via POST /api/analyze/stream.
 
 import asyncio
 import json
+import time
 from queue import Empty, Queue
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Query, status
+
+# #region agent log
+_DEBUG_LOG = "/Users/lavia/PRD-corrector/.cursor/debug.log"
+def _dbg(loc: str, msg: str, data: dict, hyp: str):
+    try:
+        with open(_DEBUG_LOG, "a") as f:
+            f.write(json.dumps({"location": loc, "message": msg, "data": data, "timestamp": time.time() * 1000, "sessionId": "debug-session", "hypothesisId": hyp}) + "\n")
+    except Exception:
+        pass
+# #endregion
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, ValidationError as PydanticValidationError
 
 from src.config import settings
 from src.services.prd_service import prd_service
 from src.services.analysis_service import analysis_service
+from src.services.storage import storage
+from src.services.task_processor import task_processor
 from src.services.analyzer import analyzer_service
-from src.services.validation import ValidationError
+from src.services.validation import ValidationError, validate_file
 from src.utils.file_parser import FileParseError
 from src.utils.logger import get_logger
 
@@ -40,7 +53,7 @@ class TextInputRequest(BaseModel):
 class AnalyzeResponse(BaseModel):
     """Response model for analyze endpoint."""
 
-    prd_id: str
+    prd_id: str | None  # null for file uploads until conversion completes
     analysis_id: str | None = None
     message: str
 
@@ -60,6 +73,33 @@ async def analyze_prd(
     Returns:
         PRD ID and analysis ID (if analysis initiated)
     """
+    # #region agent log
+    _dbg("analyze.py:analyze_prd_entry", "analyze_prd entry", {"has_file": file is not None, "has_text": text is not None}, "A")
+    # #endregion
+    try:
+        return await _analyze_prd_impl(file, text)
+    except HTTPException:
+        raise
+    except BaseException as e:
+        # #region agent log
+        _dbg("analyze.py:analyze_prd_top_level_catch", "top-level BaseException", {"exc_type": type(e).__name__, "exc_msg": str(e)[:200]}, "B")
+        # #endregion
+        logger.error("Analyze endpoint top-level error", exc_info=True)
+        exc_str = f"{type(e).__name__}: {e}"[:400]
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Server error. {exc_str}",
+        ) from e
+
+
+async def _analyze_prd_impl(
+    file: UploadFile | None,
+    text: str | None,
+) -> AnalyzeResponse:
+    """Implementation of analyze endpoint (called so we can catch all exceptions in the route)."""
+    # #region agent log
+    _dbg("analyze.py:_analyze_prd_impl_entry", "impl entry", {"has_file": file is not None}, "B")
+    # #endregion
     # Validate that exactly one input method is provided
     if file and text:
         raise HTTPException(
@@ -74,26 +114,62 @@ async def analyze_prd(
         )
 
     try:
-
-        # Handle file upload
+        # Handle file upload: validate only, store raw file, convert in background
         if file:
+            logger.info("Analyze file upload started")
+            # #region agent log
+            _dbg("analyze.py:before_file_read", "before file.read", {}, "B")
+            # #endregion
             file_content = await file.read()
-            prd = prd_service.create_prd_from_file(file_content, file.filename or "uploaded_file")
-            logger.info(f"PRD created from file: {prd.id}")
+            # #region agent log
+            _dbg("analyze.py:after_file_read", "after file.read", {"len": len(file_content)}, "B")
+            # #endregion
+            filename = file.filename or "uploaded_file"
+            from io import BytesIO
+            file_io = BytesIO(file_content)
+            try:
+                file_type, size = validate_file(file_io, filename)
+            except ValidationError as e:
+                logger.error(f"File validation failed for {filename}: {e.message}")
+                raise
+            try:
+                # #region agent log
+                _dbg("analyze.py:before_create_analysis_converting", "before create_analysis_converting", {}, "B")
+                # #endregion
+                analysis = analysis_service.create_analysis_converting()
+                # #region agent log
+                _dbg("analyze.py:after_create_analysis_converting", "after create_analysis_converting", {"analysis_id": str(analysis.id)}, "B")
+                # #endregion
+                storage.set_pending_upload(analysis.id, file_content, filename)
+                asyncio.create_task(task_processor.process_file_conversion_and_analysis(analysis.id))
+            except Exception as e:
+                logger.error(f"Failed to create analysis or store pending upload: {e}", exc_info=True)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to start analysis. Please try again.",
+                ) from e
+            logger.info(f"[TIMING] Endpoint returning 201 with analysis_id={analysis.id} (file upload, CONVERTING)")
+            # #region agent log
+            _dbg("analyze.py:returning_201_file", "returning 201 file upload", {"analysis_id": str(analysis.id)}, "C")
+            # #endregion
+            return AnalyzeResponse(
+                prd_id=None,
+                analysis_id=str(analysis.id),
+                message="File received. Converting to text, then analysis will start.",
+            )
 
-        # Handle text paste
+        # Handle text paste: create PRD and initiate analysis in request
         else:  # text is guaranteed to be not None here
             prd = prd_service.create_prd_from_text(text)
             logger.info(f"PRD created from text: {prd.id}")
+            analysis = await analysis_service.initiate_analysis(prd.id)
+            logger.info(f"[TIMING] Endpoint returning 201 with analysis_id={analysis.id}")
 
-        # Initiate analysis
-        analysis = await analysis_service.initiate_analysis(prd.id)
-
-        return AnalyzeResponse(
-            prd_id=str(prd.id),
-            analysis_id=str(analysis.id),
-            message="PRD uploaded successfully. Analysis initiated.",
-        )
+            return AnalyzeResponse(
+                prd_id=str(prd.id),
+                analysis_id=str(analysis.id),
+                message="PRD uploaded successfully. Analysis initiated.",
+            )
 
     except ValidationError as e:
         logger.error(f"Validation error: {e.message}")
@@ -107,17 +183,16 @@ async def analyze_prd(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Failed to parse file: {e.message}",
-        )
+        ) from e
 
     except ValueError as e:
         logger.error(f"Value error: {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
-        )
+        ) from e
 
     except PydanticValidationError as e:
-        # PRD/Analysis model validation (e.g. content empty, size invalid)
         errs = e.errors()
         msg = errs[0].get("msg", str(e)) if errs else str(e)
         if errs and "loc" in errs[0]:
@@ -131,14 +206,19 @@ async def analyze_prd(
         ) from e
 
     except Exception as e:
-        logger.error(f"Unexpected error in analyze endpoint: {e}", exc_info=True)
-        detail = "An unexpected error occurred"
-        if getattr(settings, "DEBUG", False):
-            detail = f"{detail}: {type(e).__name__}: {e}"
+        logger.error("Analyze endpoint error", exc_info=True)
+        exc_str = f"{type(e).__name__}: {e}"[:400]
+        detail = f"An unexpected error occurred. {exc_str}"
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=detail,
-        )
+        ) from e
+
+    # Not reached
+    raise HTTPException(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        detail="Unexpected state in analyze endpoint",
+    )
 
 
 def _run_analysis_with_queue(prd, queue: Queue, deep: bool = False) -> None:
