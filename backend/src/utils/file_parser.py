@@ -28,14 +28,32 @@ _TRIM_DROP_LINES = frozenset({
 # Drop "Page X" / "Page X of Y" style lines
 _TRIM_PAGE_OF_RE = re.compile(r"^page\s+\d+(\s+of\s+\d+)?$", re.IGNORECASE)
 
+# Markdown image: ![alt](url) — url can be long (e.g. data:image/...;base64,...)
+_IMAGE_MD_RE = re.compile(r"!\[([^\]]*)\]\([^)]+\)", re.DOTALL)
+
+
+def _replace_images_with_placeholder(content: str) -> str:
+    """
+    Replace markdown images with a short note so the LLM knows an image was there
+    without embedding large base64 or file content. Reduces token count.
+    """
+    def repl(match: re.Match) -> str:
+        alt = (match.group(1) or "").strip()
+        if alt:
+            return f"[Image: {alt}]"
+        return "[Image]"
+
+    return _IMAGE_MD_RE.sub(repl, content)
+
 
 def _trim_markdown(content: str) -> str:
     """
-    Shorten markdown: collapse newlines, strip lines, drop boilerplate,
-    page-only lines, and punctuation-only lines; collapse spaces.
+    Shorten markdown: replace images with placeholders, collapse newlines, strip lines,
+    drop boilerplate, page-only lines, and punctuation-only lines; collapse spaces.
     """
     if not content or not content.strip():
         return content.strip()
+    content = _replace_images_with_placeholder(content)
     lines = content.splitlines()
     out = []
     prev_empty = False

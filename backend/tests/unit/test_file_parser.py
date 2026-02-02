@@ -10,7 +10,12 @@ from pathlib import Path
 import tempfile
 import os
 
-from src.utils.file_parser import parse_file, parse_text_content, FileParseError
+from src.utils.file_parser import (
+    parse_file,
+    parse_text_content,
+    FileParseError,
+    _replace_images_with_placeholder,
+)
 from src.models.prd import PRDFileType
 
 
@@ -103,6 +108,27 @@ class TestFileParser:
         result = parse_file(file_content, "test.txt", PRDFileType.TXT)
         
         assert result == content
+
+    def test_replace_images_with_placeholder(self):
+        """Images in markdown are replaced with short notes to reduce token count."""
+        # Image with alt text
+        md = "Intro\n\n![Diagram of flow](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAE=)\n\nEnd"
+        out = _replace_images_with_placeholder(md)
+        assert "data:image" not in out
+        assert "[Image: Diagram of flow]" in out
+        assert "Intro" in out and "End" in out
+        # Image without alt
+        md2 = "Text ![ ](file.png) more"
+        out2 = _replace_images_with_placeholder(md2)
+        assert "[Image]" in out2
+        assert "file.png" not in out2
+
+    def test_parse_md_file_strips_images_to_placeholder(self):
+        """Parsing .md with images yields placeholders, not raw image data."""
+        content = "# Doc\n\n![Screenshot](data:image/png;base64,AAAA)\n\nDone"
+        result = parse_file(BytesIO(content.encode("utf-8")), "test.md", PRDFileType.MD)
+        assert "[Image: Screenshot]" in result
+        assert "base64" not in result
 
     def test_parse_file_large_content(self):
         """Test parsing large file content."""
