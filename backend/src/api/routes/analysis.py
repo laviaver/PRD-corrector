@@ -4,8 +4,6 @@ Analysis endpoints for retrieving analysis results and status.
 This module provides endpoints for getting analysis results and polling status.
 """
 
-import json
-import time
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, status
@@ -30,13 +28,6 @@ async def get_analysis(analysis_id: str):
     Returns:
         Analysis with suggestions
     """
-    # #region agent log
-    try:
-        with open("/Users/lavia/PRD-corrector/.cursor/debug.log", "a") as f:
-            f.write(json.dumps({"location": "analysis.py:get_analysis_entry", "message": "get_analysis entry", "data": {"analysis_id": analysis_id[:36]}, "timestamp": time.time() * 1000, "sessionId": "debug-session", "hypothesisId": "D"}) + "\n")
-    except Exception:
-        pass
-    # #endregion
     try:
         analysis_uuid = UUID(analysis_id)
     except ValueError:
@@ -101,13 +92,6 @@ async def get_analysis_by_prd(prd_id: str):
 
 @router.get("/analysis/{analysis_id}/status")
 async def get_analysis_status(analysis_id: str):
-    # #region agent log
-    try:
-        with open("/Users/lavia/PRD-corrector/.cursor/debug.log", "a") as f:
-            f.write(json.dumps({"location": "analysis.py:get_analysis_status_entry", "message": "get_analysis_status entry", "data": {"analysis_id": analysis_id[:36]}, "timestamp": time.time() * 1000, "sessionId": "debug-session", "hypothesisId": "D"}) + "\n")
-    except Exception:
-        pass
-    # #endregion
     """
     Get analysis status for polling.
 

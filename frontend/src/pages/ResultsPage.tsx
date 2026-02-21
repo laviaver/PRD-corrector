@@ -40,7 +40,12 @@ export default function ResultsPage() {
       setAnalysis(result);
       setError('');
     } catch (err) {
-      const errorMessage = formatError(err);
+      let errorMessage = formatError(err);
+      // 404: analysis not in backend (expired after restart, or invalid link)
+      if (errorMessage.toLowerCase().includes('not found') || errorMessage.includes('404')) {
+        errorMessage =
+          'Analysis not found. The analysis may have expired (e.g. after a server restart). Please upload a new PRD to analyze.';
+      }
       setError(errorMessage);
       logError(err, 'ResultsPage.loadAnalysis');
     } finally {

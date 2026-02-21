@@ -8,6 +8,28 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 import { API_ENDPOINTS, API_CONFIG } from '../constants/api';
 
+const CONNECTION_ERROR_GUIDE =
+  'Cannot reach the API. (1) Open the app at http://localhost:5173 (run in frontend: npm run dev). (2) Start the backend: cd backend && ./run.sh — then reload.';
+
+function isConnectionLikeError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes('connection') ||
+    lower.includes('network error') ||
+    lower.includes('failed to fetch') ||
+    lower.includes('load failed') ||
+    lower === 'connection error.' ||
+    lower === 'connection error'
+  );
+}
+
+function connectionErrorMessage(isTimeout: boolean): string {
+  if (isTimeout) {
+    return 'Request timed out. The server may be busy or the file is large—try again.';
+  }
+  return CONNECTION_ERROR_GUIDE;
+}
+
 /**
  * Create configured Axios instance.
  */
@@ -82,14 +104,14 @@ apiClient.interceptors.response.use(
     } else if (error.request) {
       // Request made but no response received (backend down, timeout, or connection reset)
       const isTimeout = error.code === 'ECONNABORTED' || error.message?.toLowerCase().includes('timeout');
-      throw new Error(
-        isTimeout
-          ? 'Request timed out. The server may be busy or the file is large—try again.'
-          : 'Network error: No response from server. Check that the backend is running (e.g. port 8000) and try again.'
-      );
+      throw new Error(connectionErrorMessage(isTimeout));
     } else {
-      // Error setting up request
-      throw new Error(error.message || 'Request setup error');
+      // Error setting up request (e.g. Connection error, Failed to fetch, CORS) — show same guidance
+      const msg = (error.message || '').trim();
+      if (isConnectionLikeError(msg)) {
+        throw new Error(connectionErrorMessage(false));
+      }
+      throw new Error(msg || 'Request setup error');
     }
   }
 );
